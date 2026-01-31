@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "title": "The North Face AI Campaign Thread",
+    "thread": [
+      "The North Face just showed every brand how to use AI for marketing. Here's the play that got them a 340% engagement spike 🧵👇",
+      "They used AI-powered social listening to detect a viral TikTok trend — hikers wearing their gear in unexpected urban places. But here's the key: they caught it within HOURS, not the usual days.",
+      "Instead of a 3-week campaign approval cycle, they had pre-approved creative frameworks ready. Their team produced responsive content in under 4 hours. Speed isn't reckless when you have systems.",
+      "The results:\n• 340% increase in social engagement\n• 28% lift in DTC sales that week\n• 5x more earned media mentions than their planned campaign\n\nThis wasn't luck. It was infrastructure.",
+      "Why this matters for every brand:\n\n1. AI social listening is now table stakes\n2. Pre-approved creative frameworks > approval committees\n3. Speed is the new competitive advantage in marketing",
+      "The takeaway: The brands winning in 2025 aren't the ones with the biggest budgets. They're the ones with the fastest feedback loops between culture and content.",
+      "Follow @tal_hacmon for daily breakdowns of AI moves that matter for business.\n\nDeeper analysis in my newsletter (5 min read): https://lnkd.in/dr5n5jze"
+    ],
+    "engagement": {"likes": 2200, "retweets": 450, "replies": 89}
+  },
+  {
+    "id": 2,
+    "title": "YC Batch AI Analysis Thread",
+    "thread": [
+      "I analyzed every AI company in @ycombinator's latest batch. The patterns tell us exactly where AI is heading 🧵",
+      "72% of AI startups are NOT building foundation models. They're building vertical applications on top of existing models. The model layer is consolidating. The opportunity is in the application layer.",
+      "The biggest category? Regulated industries.\n\n40% are in healthcare, legal, or finance.\n\nWhy? Domain expertise is the moat, not the model. Your competitor can use the same GPT-4 API. They can't replicate your healthcare compliance knowledge.",
+      "28% are building developer tools — the picks and shovels play.\n\nEval frameworks, prompt management, deployment infrastructure.\n\nEvery AI application needs tooling. These companies are building the Rails/Django of the AI era.",
+      "Only 12% are doing consumer AI. That's telling.\n\nYC's partners are the best pattern-matchers in tech. They're signaling that B2B vertical AI is where the money will be made.",
+      "The takeaway for founders:\n\n• Build specific, not general\n• Own a vertical, don't compete on the model\n• If you're in a regulated industry, your domain knowledge IS your moat",
+      "Follow @tal_hacmon for daily AI business breakdowns.\n\nFull analysis in my newsletter: https://lnkd.in/dr5n5jze"
+    ],
+    "engagement": {"likes": 3100, "retweets": 680, "replies": 124}
+  }
+]

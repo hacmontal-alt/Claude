@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Content Machine — Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><span>AI</span> Content Machine</h1>
+            <div class="date-nav">
+                <input type="date" id="dateSelector" value="{{ date }}" onchange="navigateToDate(this.value)">
+                <a href="/history" class="btn">History</a>
+            </div>
+        </header>
+
+        {% if not topics %}
+        <div class="empty-state">
+            <h2>No content for {{ date }}</h2>
+            <p>Run the daily pipeline to generate content, or select a different date.</p>
+        </div>
+        {% endif %}
+
+        {% for topic in topics %}
+        <section class="topic-section" data-topic-id="{{ topic.id }}">
+            <div class="topic-header">
+                <div>
+                    <span class="topic-rank">{{ topic.rank }}</span>
+                    <span class="topic-title">{{ topic.title[:100] }}</span>
+                </div>
+                <span class="topic-score">Score: {{ "%.3f"|format(topic.score) }}</span>
+            </div>
+
+            {% if topic.score_breakdown_obj %}
+            <div class="score-breakdown">
+                {% for key, val in topic.score_breakdown_obj.items() %}
+                {% if key != 'total' %}
+                <span class="score-pill">{{ key }}: <strong>{{ "%.2f"|format(val) }}</strong></span>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="posts-grid">
+                {% for post in topic.posts %}
+                <div class="post-card" data-post-id="{{ post.id }}">
+                    <div class="post-card-header">
+                        <span class="platform-badge {{ post.platform }}">{{ post.platform }}</span>
+                        <span class="post-status {{ post.status }}">{{ post.status }}</span>
+                    </div>
+                    <div class="post-card-body">
+                        {% if post.platform == 'twitter' and post.thread %}
+                            {% for tweet in post.thread %}
+                            <div class="tweet-editor">
+                                <div class="tweet-label">
+                                    <span>Tweet {{ loop.index }}</span>
+                                    <span class="char-count {% if tweet|length > 280 %}over{% endif %}">{{ tweet|length }}/280</span>
+                                </div>
+                                <textarea class="tweet-input" data-index="{{ loop.index0 }}"
+                                    oninput="updateCharCount(this)">{{ tweet }}</textarea>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <textarea class="post-textarea" oninput="markDirty(this)">{{ post.content }}</textarea>
+                        {% endif %}
+                    </div>
+                    <div class="post-card-actions">
+                        <button class="btn btn-primary" onclick="savePost({{ post.id }}, this)">Save Draft</button>
+                        <button class="btn btn-success" onclick="approvePost({{ post.id }}, this)">Approve & Schedule</button>
+                        <button class="btn" onclick="regeneratePost({{ topic.id }}, '{{ post.platform }}', this)">Regenerate</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if topic.sources_detail %}
+            <div class="sources-panel">
+                <h3>Sources ({{ topic.sources_detail|length }})</h3>
+                {% for src in topic.sources_detail %}
+                <div class="source-item">
+                    <a href="{{ src.url }}" target="_blank">{{ src.title }}</a>
+                    <div class="source-meta">
+                        {{ src.source_name }} &middot;
+                        {{ src.engagement_likes }} likes &middot;
+                        {{ src.engagement_shares }} shares
+                        {% if src.published_at %} &middot; {{ src.published_at[:16] }}{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </section>
+        {% endfor %}
+
+        {% if prev_topics %}
+        <section class="prev-section">
+            <h2>Previous Day ({{ prev_date }}) — Style Consistency Check</h2>
+            {% for topic in prev_topics %}
+                {% for post in topic.posts %}
+                <div class="prev-post">
+                    <strong>[{{ post.platform|upper }}]</strong> {{ topic.title[:80] }}
+---
+{{ post.content[:500] }}{% if post.content|length > 500 %}...{% endif %}
+                </div>
+                {% endfor %}
+            {% endfor %}
+        </section>
+        {% endif %}
+    </div>
+
+    <!-- Toast notification -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        function navigateToDate(date) {
+            window.location.href = '/?date=' + date;
+        }
+
+        function showToast(message, isError) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show' + (isError ? ' error' : '');
+            setTimeout(() => { toast.className = 'toast'; }, 3000);
+        }
+
+        function getPostContent(postCard) {
+            // Check if it's a twitter thread
+            const tweetInputs = postCard.querySelectorAll('.tweet-input');
+            if (tweetInputs.length > 0) {
+                const tweets = [];
+                tweetInputs.forEach(input => tweets.push(input.value));
+                return JSON.stringify(tweets);
+            }
+            // LinkedIn post
+            const textarea = postCard.querySelector('.post-textarea');
+            return textarea ? textarea.value : '';
+        }
+
+        function savePost(postId, btn) {
+            const card = btn.closest('.post-card');
+            const content = getPostContent(card);
+
+            fetch(`/api/post/${postId}/update`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: content })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                showToast('Draft saved');
+            })
+            .catch(e => showToast('Error: ' + e.message, true));
+        }
+
+        function approvePost(postId, btn) {
+            // Save first, then approve
+            const card = btn.closest('.post-card');
+            const content = getPostContent(card);
+
+            fetch(`/api/post/${postId}/update`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: content })
+            })
+            .then(() => fetch(`/api/post/${postId}/approve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            }))
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                const badge = card.querySelector('.post-status');
+                badge.className = 'post-status approved';
+                badge.textContent = 'approved';
+                showToast('Post approved and scheduled');
+            })
+            .catch(e => showToast('Error: ' + e.message, true));
+        }
+
+        function regeneratePost(topicId, platform, btn) {
+            btn.textContent = 'Regenerating...';
+            btn.disabled = true;
+
+            fetch('/api/regenerate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic_id: topicId, platform: platform })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                // Reload to show new content
+                window.location.reload();
+            })
+            .catch(e => {
+                showToast('Error: ' + e.message, true);
+                btn.textContent = 'Regenerate';
+                btn.disabled = false;
+            });
+        }
+
+        function updateCharCount(textarea) {
+            const label = textarea.closest('.tweet-editor').querySelector('.char-count');
+            const len = textarea.value.length;
+            label.textContent = len + '/280';
+            label.className = 'char-count' + (len > 280 ? ' over' : '');
+        }
+
+        function markDirty(textarea) {
+            // Visual indicator that content has been edited
+            const card = textarea.closest('.post-card');
+            const saveBtn = card.querySelector('.btn-primary');
+            if (saveBtn && !saveBtn.textContent.includes('*')) {
+                saveBtn.textContent = 'Save Draft *';
+            }
+        }
+    </script>
+</body>
+</html>

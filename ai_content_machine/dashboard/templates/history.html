@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Content Machine — History</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><span>AI</span> Content Machine — History</h1>
+            <div class="date-nav">
+                <a href="/" class="btn btn-primary">Back to Dashboard</a>
+            </div>
+        </header>
+
+        {% if not posts %}
+        <div class="empty-state">
+            <h2>No post history yet</h2>
+            <p>Generated posts will appear here after running the pipeline.</p>
+        </div>
+        {% else %}
+            {% for post in posts %}
+            <div class="history-item">
+                <div class="history-item-header">
+                    <div>
+                        <span class="platform-badge {{ post.platform }}">{{ post.platform }}</span>
+                        <strong style="margin-left: 8px;">{{ post.topic_title or 'Unknown Topic' }}</strong>
+                    </div>
+                    <div>
+                        <span class="post-status {{ post.status }}">{{ post.status }}</span>
+                        <span style="color: var(--text-muted); font-size: 12px; margin-left: 8px;">
+                            {{ post.topic_date or post.created_at[:10] }}
+                        </span>
+                    </div>
+                </div>
+                <div class="history-content">{{ post.content[:600] }}{% if post.content|length > 600 %}...{% endif %}</div>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</body>
+</html>

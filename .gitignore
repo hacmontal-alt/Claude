@@ -1,0 +1,25 @@
+# Environment
+.env
+*.pyc
+__pycache__/
+*.pyo
+.venv/
+venv/
+env/
+
+# Database
+data/db/*.db
+
+# Logs
+logs/*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
