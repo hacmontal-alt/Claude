@@ -363,7 +363,7 @@ export default function Home() {
         </div>
         <ul>
           <li><a href="#">Product</a></li>
-          <li><a href="#">Competitors</a></li>
+          <li><a href="https://calendly.com/trace-demo" target="_blank" rel="noopener noreferrer">Schedule Demo</a></li>
           <li><a href="#pricing">Pricing</a></li>
           <li><a href="#">Blog</a></li>
         </ul>
