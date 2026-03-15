@@ -3,13 +3,23 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
+const AI_NAMES = ["ChatGPT", "Gemini", "Perplexity", "Grok", "Claude", "AI Overviews"];
+
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
+  const [aiIndex, setAiIndex] = useState(0);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAiIndex(prev => (prev + 1) % AI_NAMES.length);
+    }, 2200);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -288,6 +298,19 @@ export default function Home() {
         .delay-2{animation-delay:0.2s}
         .delay-3{animation-delay:0.35s}
         .delay-4{animation-delay:0.5s}
+        .ai-cycle-wrap{
+          display:inline-block;position:relative;
+          color:var(--coral);font-style:italic;
+          min-width:280px;text-align:center;
+        }
+        .ai-cycle-text{
+          display:inline-block;
+          animation:aiCycleIn 0.5s var(--ease) both;
+        }
+        @keyframes aiCycleIn{
+          from{opacity:0;transform:translateY(20px) scale(0.95)}
+          to{opacity:1;transform:translateY(0) scale(1)}
+        }
         @media(max-width:768px){
           .lp-nav ul{display:none}
           .lp-nav{padding:16px 20px}
@@ -321,7 +344,7 @@ export default function Home() {
         <div className="hero-bg-1"></div>
         <div className="hero-bg-2"></div>
         <div className="hero-badge fade-up"><span className="hero-badge-dot"></span> AI Search is the new SEO</div>
-        <h1 className="lp-h1 fade-up delay-1">Leave your<br /><em>trace</em> in AI search</h1>
+        <h1 className="lp-h1 fade-up delay-1">Be the brand<br /><span className="ai-cycle-wrap"><span key={aiIndex} className="ai-cycle-text">{AI_NAMES[aiIndex]}</span></span> recommends</h1>
         <p className="hero-sub fade-up delay-2">Track exactly how your brand appears across ChatGPT, Perplexity, Google AI Overviews and every major AI engine. Know where you stand. Know what to fix.</p>
         <div className="hero-ctas fade-up delay-3">
           <Link href="/signup" className="btn-primary">Start for free</Link>
