@@ -64,7 +64,7 @@ export default function Home() {
         }
         .nav-cta:hover{transform:translateY(-1px);box-shadow:0 12px 32px rgba(239,70,35,0.3)}
         .hero{
-          padding:160px 40px 100px;
+          padding:120px 40px 60px;
           text-align:center;
           position:relative;overflow:hidden;
         }
@@ -88,14 +88,14 @@ export default function Home() {
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
         .lp-h1{
           font-family:'Instrument Serif',serif;
-          font-size:clamp(64px,9vw,120px);
+          font-size:clamp(48px,7vw,88px);
           line-height:1;letter-spacing:-0.02em;
           color:var(--ink);margin-bottom:8px;
         }
         .lp-h1 em{color:var(--coral);font-style:italic}
         .hero-sub{
-          max-width:540px;margin:24px auto 40px;
-          font-size:18px;line-height:1.7;
+          max-width:540px;margin:16px auto 28px;
+          font-size:17px;line-height:1.6;
           color:rgba(45,59,66,0.65);font-weight:400;
         }
         .hero-ctas{display:flex;gap:14px;justify-content:center;align-items:center;flex-wrap:wrap}
