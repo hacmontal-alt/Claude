@@ -597,7 +597,7 @@ function Step3() {
   useEffect(() => {
     if (progress >= 100) {
       const timer = setTimeout(() => {
-        window.location.href = "/overview";
+        window.location.href = "/dashboard";
       }, 1200);
       return () => clearTimeout(timer);
     }
