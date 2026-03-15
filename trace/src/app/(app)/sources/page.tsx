@@ -1,0 +1,169 @@
+"use client";
+
+import { useMemo } from "react";
+import { getSampleSources } from "@/lib/utils/sample-data";
+import Callout from "@/components/ui/Callout";
+import Tag from "@/components/ui/Tag";
+import Metric from "@/components/ui/Metric";
+
+const CONTENT_TYPE_COLOR: Record<string, string> = {
+  brand: "coral",
+  competitor: "red",
+  review: "purple",
+  ugc: "orange",
+  video: "cyan",
+  ecommerce: "green",
+  reference: "gray",
+  editorial: "gray",
+};
+
+export default function SourcesPage() {
+  const sources = useMemo(() => getSampleSources(), []);
+
+  const totalSources = sources.length;
+  const brandOwned = sources.filter((s) => s.isBrandOwned).length;
+  const totalCitations = sources.reduce((a, s) => a + s.totalCitations, 0);
+  const brandCitations = sources
+    .filter((s) => s.isBrandOwned)
+    .reduce((a, s) => a + s.totalCitations, 0);
+  const citationRate =
+    totalCitations > 0
+      ? Math.round((brandCitations / totalCitations) * 1000) / 10
+      : 0;
+  const topDomain = sources[0]?.domain ?? "N/A";
+
+  return (
+    <div className="max-w-[1200px] mx-auto">
+      <div className="mb-5">
+        <h1 className="text-xl font-bold text-[#2D3B42]">Sources</h1>
+        <p className="text-[13px] text-[#8A9BA3] mt-0.5">
+          Domains and pages cited by AI models in responses about your brand.
+        </p>
+      </div>
+
+      <div className="mb-4">
+        <Callout type="info">
+          You are viewing sample data for Nespresso. Connect your brand to see
+          real results.
+        </Callout>
+      </div>
+
+      {/* Summary metrics */}
+      <div className="flex gap-3 mb-5 flex-wrap">
+        <Metric label="Total Sources" value={String(totalSources)} />
+        <Metric label="Brand Owned" value={String(brandOwned)} />
+        <Metric
+          label="Brand Citation Rate"
+          value={`${citationRate}%`}
+          change="+1.8%"
+        />
+        <Metric label="Top Domain" value={topDomain} />
+      </div>
+
+      {/* Sources table */}
+      <div className="bg-white border border-[#E8EAEB] rounded-lg overflow-hidden">
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="border-b border-[#E8EAEB] bg-[#F8F9FA]">
+              <th className="text-left text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium px-3 py-2.5">
+                Domain
+              </th>
+              <th className="text-right text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium px-3 py-2.5">
+                Citations
+              </th>
+              <th className="text-center text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium px-3 py-2.5">
+                Content Type
+              </th>
+              <th className="text-center text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium px-3 py-2.5">
+                Brand Owned
+              </th>
+              <th className="text-right text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium px-3 py-2.5">
+                Trend
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {sources.map((source) => {
+              const trendValue = getTrend(source.domain);
+              const isPositive = trendValue.startsWith("+");
+
+              return (
+                <tr
+                  key={source.domain}
+                  className="border-b border-[#E8EAEB] hover:bg-[#F8F9FA] transition"
+                >
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-2 h-2 rounded-full shrink-0 ${
+                          source.isBrandOwned
+                            ? "bg-[#EF4623]"
+                            : "bg-[#E8EAEB]"
+                        }`}
+                      />
+                      <span className="text-[#2D3B42] font-medium">
+                        {source.domain}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-3 py-2.5 text-right text-[#4A5D66] tabular-nums">
+                    {source.totalCitations}
+                  </td>
+                  <td className="px-3 py-2.5 text-center">
+                    <Tag
+                      label={source.contentType}
+                      color={
+                        CONTENT_TYPE_COLOR[source.contentType] ?? "gray"
+                      }
+                      small
+                    />
+                  </td>
+                  <td className="px-3 py-2.5 text-center">
+                    {source.isBrandOwned ? (
+                      <span className="inline-flex items-center justify-center w-5 h-5 bg-[#ECFDF5] rounded-full">
+                        <svg
+                          className="w-3 h-3 text-[#059669]"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={3}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </span>
+                    ) : (
+                      <span className="text-[#8A9BA3]">&mdash;</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2.5 text-right">
+                    <span
+                      className={`text-[11px] font-semibold ${
+                        isPositive ? "text-[#047857]" : "text-[#DC2626]"
+                      }`}
+                    >
+                      {trendValue}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/** Deterministic pseudo-trend per domain for sample data display. */
+function getTrend(domain: string): string {
+  let hash = 0;
+  for (let i = 0; i < domain.length; i++) {
+    hash = (hash * 31 + domain.charCodeAt(i)) | 0;
+  }
+  const abs = Math.abs(hash % 40) / 10;
+  return hash % 3 === 0 ? `-${abs.toFixed(1)}%` : `+${abs.toFixed(1)}%`;
+}
