@@ -3,7 +3,32 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-const AI_NAMES = ["ChatGPT", "Gemini", "Perplexity", "Grok", "Claude", "AI Overviews"];
+const AI_LOGOS: { name: string; logo: React.ReactNode }[] = [
+  {
+    name: "ChatGPT",
+    logo: <svg width="120" height="60" viewBox="0 0 120 60" fill="none"><circle cx="30" cy="30" r="22" fill="#10a37f"/><path d="M30 14c-1.5 0-2.8.8-3.5 2l-7 12.1c-.7 1.2-.7 2.8 0 4l7 12.1c.7 1.2 2 2 3.5 2s2.8-.8 3.5-2l7-12.1c.7-1.2.7-2.8 0-4l-7-12.1c-.7-1.2-2-2-3.5-2z" fill="#fff" opacity="0.9"/><text x="58" y="36" fontFamily="'Manrope',sans-serif" fontSize="16" fontWeight="700" fill="#2D3B42">ChatGPT</text></svg>,
+  },
+  {
+    name: "Gemini",
+    logo: <svg width="110" height="60" viewBox="0 0 110 60" fill="none"><circle cx="30" cy="30" r="22" fill="#4285f4"/><path d="M30 12c-2 0-3.6 1.2-4.2 3l-5 15c-.4 1.2 0 2.5 1 3.3l12 9c1 .8 2.4.8 3.4 0l12-9c1-.8 1.4-2.1 1-3.3l-5-15c-.6-1.8-2.2-3-4.2-3h-10z" fill="#fff" opacity="0.85"/><text x="56" y="36" fontFamily="'Manrope',sans-serif" fontSize="16" fontWeight="700" fill="#2D3B42">Gemini</text></svg>,
+  },
+  {
+    name: "Perplexity",
+    logo: <svg width="130" height="60" viewBox="0 0 130 60" fill="none"><circle cx="30" cy="30" r="22" fill="#7c3aed"/><path d="M22 20h16v20H22z" fill="#fff" opacity="0.85" rx="3"/><path d="M26 26h8M26 30h6M26 34h8" stroke="#7c3aed" strokeWidth="1.5" strokeLinecap="round"/><text x="56" y="36" fontFamily="'Manrope',sans-serif" fontSize="16" fontWeight="700" fill="#2D3B42">Perplexity</text></svg>,
+  },
+  {
+    name: "Grok",
+    logo: <svg width="95" height="60" viewBox="0 0 95 60" fill="none"><circle cx="30" cy="30" r="22" fill="#2D3B42"/><text x="30" y="37" textAnchor="middle" fontFamily="'Manrope',sans-serif" fontSize="20" fontWeight="800" fill="#fff">𝕏</text><text x="56" y="36" fontFamily="'Manrope',sans-serif" fontSize="16" fontWeight="700" fill="#2D3B42">Grok</text></svg>,
+  },
+  {
+    name: "Claude",
+    logo: <svg width="105" height="60" viewBox="0 0 105 60" fill="none"><circle cx="30" cy="30" r="22" fill="#D97706"/><path d="M24 22c0-1.1.9-2 2-2h8c1.1 0 2 .9 2 2v16c0 1.1-.9 2-2 2h-8c-1.1 0-2-.9-2-2V22z" fill="#fff" opacity="0.85"/><circle cx="30" cy="28" r="3" fill="#D97706"/><text x="56" y="36" fontFamily="'Manrope',sans-serif" fontSize="16" fontWeight="700" fill="#2D3B42">Claude</text></svg>,
+  },
+  {
+    name: "AI Overviews",
+    logo: <svg width="155" height="60" viewBox="0 0 155 60" fill="none"><circle cx="30" cy="30" r="22" fill="#ea4335"/><path d="M22 30a8 8 0 1116 0 8 8 0 01-16 0z" fill="#fff" opacity="0.85"/><path d="M30 25v10M25 30h10" stroke="#ea4335" strokeWidth="2" strokeLinecap="round"/><text x="56" y="36" fontFamily="'Manrope',sans-serif" fontSize="16" fontWeight="700" fill="#2D3B42">AI Overviews</text></svg>,
+  },
+];
 
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
@@ -17,7 +42,7 @@ export default function Home() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setAiIndex(prev => (prev + 1) % AI_NAMES.length);
+      setAiIndex(prev => (prev + 1) % AI_LOGOS.length);
     }, 2200);
     return () => clearInterval(interval);
   }, []);
@@ -299,16 +324,19 @@ export default function Home() {
         .delay-3{animation-delay:0.35s}
         .delay-4{animation-delay:0.5s}
         .ai-cycle-wrap{
-          display:inline-block;position:relative;
-          color:var(--coral);font-style:italic;
-          min-width:280px;text-align:center;
+          display:inline-flex;align-items:center;justify-content:center;
+          min-width:200px;min-height:70px;vertical-align:middle;
+          margin:8px 0;
         }
         .ai-cycle-text{
-          display:inline-block;
+          display:inline-flex;align-items:center;
           animation:aiCycleIn 0.5s var(--ease) both;
         }
+        .ai-cycle-text svg{
+          height:clamp(40px,6vw,60px);width:auto;
+        }
         @keyframes aiCycleIn{
-          from{opacity:0;transform:translateY(20px) scale(0.95)}
+          from{opacity:0;transform:translateY(24px) scale(0.9)}
           to{opacity:1;transform:translateY(0) scale(1)}
         }
         @media(max-width:768px){
@@ -344,7 +372,7 @@ export default function Home() {
         <div className="hero-bg-1"></div>
         <div className="hero-bg-2"></div>
         <div className="hero-badge fade-up"><span className="hero-badge-dot"></span> AI Search is the new SEO</div>
-        <h1 className="lp-h1 fade-up delay-1">Be the brand<br /><span className="ai-cycle-wrap"><span key={aiIndex} className="ai-cycle-text">{AI_NAMES[aiIndex]}</span></span> recommends</h1>
+        <h1 className="lp-h1 fade-up delay-1">Be the brand<br /><span className="ai-cycle-wrap"><span key={aiIndex} className="ai-cycle-text">{AI_LOGOS[aiIndex].logo}</span></span><br />recommends</h1>
         <p className="hero-sub fade-up delay-2">Track exactly how your brand appears across ChatGPT, Perplexity, Google AI Overviews and every major AI engine. Know where you stand. Know what to fix.</p>
         <div className="hero-ctas fade-up delay-3">
           <Link href="/signup" className="btn-primary">Start for free</Link>
