@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useEffect, useState, useCallback } from "react";
+import { Globe, Loader2, Check, X, Plus } from "lucide-react";
 
 const AI_LOGOS: { name: string; logo: React.ReactNode }[] = [
   {
@@ -30,9 +30,88 @@ const AI_LOGOS: { name: string; logo: React.ReactNode }[] = [
   },
 ];
 
+// ── Onboarding data ──
+interface OBPrompt { id: string; text: string; volume: string; checked: boolean; }
+interface OBTopic { id: string; name: string; checked: boolean; prompts: OBPrompt[]; }
+
+const MOCK_TOPICS: OBTopic[] = [
+  { id: "t1", name: "Product Recommendations", checked: true, prompts: [
+    { id: "p1", text: "What are the best tools for brand monitoring?", volume: "1.2K", checked: true },
+    { id: "p2", text: "How does AI brand tracking work?", volume: "890", checked: true },
+    { id: "p3", text: "What features should a brand monitoring tool have?", volume: "650", checked: true },
+    { id: "p4", text: "Best AI-powered marketing tools in 2026", volume: "2.4K", checked: true },
+  ]},
+  { id: "t2", name: "Competitor Comparison", checked: true, prompts: [
+    { id: "p5", text: "Best brand monitoring tools compared", volume: "2.1K", checked: true },
+    { id: "p6", text: "Which AI search tracking tool is the best?", volume: "1.5K", checked: true },
+    { id: "p7", text: "Top alternatives for brand tracking software", volume: "980", checked: true },
+  ]},
+  { id: "t3", name: "Industry Trends", checked: true, prompts: [
+    { id: "p8", text: "How is AI changing search behavior?", volume: "3.4K", checked: true },
+    { id: "p9", text: "What is GEO (Generative Engine Optimization)?", volume: "2.8K", checked: true },
+    { id: "p10", text: "Will AI replace traditional SEO?", volume: "1.9K", checked: true },
+    { id: "p11", text: "Future of AI search engines", volume: "1.6K", checked: true },
+  ]},
+  { id: "t4", name: "Use Cases", checked: true, prompts: [
+    { id: "p12", text: "How to track brand mentions in AI responses?", volume: "1.1K", checked: true },
+    { id: "p13", text: "How to improve brand visibility in ChatGPT?", volume: "980", checked: true },
+    { id: "p14", text: "How do brands optimize for AI search?", volume: "720", checked: false },
+  ]},
+  { id: "t5", name: "Buying Guides", checked: false, prompts: [
+    { id: "p15", text: "How much does AI brand monitoring cost?", volume: "720", checked: false },
+    { id: "p16", text: "Free AI brand monitoring tools", volume: "1.8K", checked: false },
+  ]},
+];
+
+const LLM_MODELS = [
+  { key: "chatgpt", name: "ChatGPT", icon: "🟢", color: "#10a37f" },
+  { key: "gemini", name: "Gemini", icon: "🔵", color: "#4285f4" },
+  { key: "perplexity", name: "Perplexity", icon: "🟣", color: "#7c3aed" },
+  { key: "grok", name: "Grok", icon: "⚫", color: "#2D3B42" },
+  { key: "ai_overviews", name: "AI Overviews", icon: "🔴", color: "#ea4335" },
+];
+
+const SAMPLE_RESULTS = [
+  { mentioned: true, position: 2, sentiment: "Positive" },
+  { mentioned: true, position: 4, sentiment: "Neutral" },
+  { mentioned: true, position: 1, sentiment: "Positive" },
+  { mentioned: false, position: null as number | null, sentiment: "—" },
+  { mentioned: true, position: 3, sentiment: "Positive" },
+];
+
+const MARKETS = [
+  { value: "us", label: "United States" }, { value: "uk", label: "United Kingdom" },
+  { value: "de", label: "Germany" }, { value: "fr", label: "France" },
+  { value: "es", label: "Spain" }, { value: "it", label: "Italy" },
+];
+const LANGUAGES = [
+  { value: "en", label: "English" }, { value: "fr", label: "French" },
+  { value: "de", label: "German" }, { value: "es", label: "Spanish" },
+  { value: "it", label: "Italian" },
+];
+
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
   const [aiIndex, setAiIndex] = useState(0);
+  // Onboarding state
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [obStep, setObStep] = useState(1);
+  // Step 1
+  const [url, setUrl] = useState("");
+  const [market, setMarket] = useState("us");
+  const [language, setLanguage] = useState("en");
+  const [brandName, setBrandName] = useState("");
+  const [detecting, setDetecting] = useState(false);
+  const [analysing, setAnalysing] = useState(false);
+  // Step 2
+  const [topics, setTopics] = useState<OBTopic[]>(MOCK_TOPICS);
+  const [selectedTopicId, setSelectedTopicId] = useState("t1");
+  const [newPromptText, setNewPromptText] = useState("");
+  // Step 3
+  const [modelStatuses, setModelStatuses] = useState<("waiting"|"querying"|"done")[]>(LLM_MODELS.map(() => "waiting"));
+  const [modelResults, setModelResults] = useState<(typeof SAMPLE_RESULTS[0] | null)[]>(LLM_MODELS.map(() => null));
+  const [completedCount, setCompletedCount] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -46,6 +125,82 @@ export default function Home() {
     }, 2200);
     return () => clearInterval(interval);
   }, []);
+
+  const openOnboarding = useCallback(() => {
+    setShowOnboarding(true);
+    setObStep(1);
+    document.body.style.overflow = "hidden";
+  }, []);
+
+  // Step 1 handlers
+  const handleUrlBlur = () => {
+    if (url.trim() && !brandName) {
+      setDetecting(true);
+      setTimeout(() => {
+        const domain = url.replace(/https?:\/\/(www\.)?/, "").split(/[/?#]/)[0];
+        const name = domain.split(".")[0];
+        setBrandName(name.charAt(0).toUpperCase() + name.slice(1));
+        setDetecting(false);
+      }, 1200);
+    }
+  };
+  const handleStep1Submit = () => {
+    setAnalysing(true);
+    setTimeout(() => { setAnalysing(false); setObStep(2); }, 2000);
+  };
+
+  // Step 2 handlers
+  const toggleTopic = (topicId: string) => {
+    setTopics(prev => prev.map(t => t.id === topicId ? { ...t, checked: !t.checked, prompts: t.prompts.map(p => ({ ...p, checked: !t.checked })) } : t));
+  };
+  const togglePrompt = (topicId: string, promptId: string) => {
+    setTopics(prev => prev.map(t => t.id === topicId ? { ...t, prompts: t.prompts.map(p => p.id === promptId ? { ...p, checked: !p.checked } : p) } : t));
+  };
+  const removePrompt = (topicId: string, promptId: string) => {
+    setTopics(prev => prev.map(t => t.id === topicId ? { ...t, prompts: t.prompts.filter(p => p.id !== promptId) } : t));
+  };
+  const addPrompt = () => {
+    if (!newPromptText.trim()) return;
+    setTopics(prev => prev.map(t => t.id === selectedTopicId ? { ...t, prompts: [...t.prompts, { id: `p-${Date.now()}`, text: newPromptText.trim(), volume: "—", checked: true }] } : t));
+    setNewPromptText("");
+  };
+  const selectedTopic = topics.find(t => t.id === selectedTopicId);
+  const totalChecked = topics.flatMap(t => t.prompts).filter(p => p.checked).length;
+
+  // Step 3 — trigger model queries
+  useEffect(() => {
+    if (obStep !== 3) return;
+    setElapsed(0); setCompletedCount(0);
+    setModelStatuses(LLM_MODELS.map(() => "waiting"));
+    setModelResults(LLM_MODELS.map(() => null));
+    const timer = setInterval(() => setElapsed(prev => prev + 1), 1000);
+    const delays = [1500, 4000, 7500, 11000, 15000];
+    const durations = [2000, 3000, 3500, 3000, 2500];
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+    LLM_MODELS.forEach((_, i) => {
+      timeouts.push(setTimeout(() => {
+        setModelStatuses(prev => prev.map((s, j) => j === i ? "querying" : s));
+      }, delays[i]));
+      timeouts.push(setTimeout(() => {
+        setModelStatuses(prev => prev.map((s, j) => j === i ? "done" : s));
+        setModelResults(prev => prev.map((r, j) => j === i ? SAMPLE_RESULTS[i] : r));
+        setCompletedCount(prev => prev + 1);
+      }, delays[i] + durations[i]));
+    });
+    return () => { clearInterval(timer); timeouts.forEach(clearTimeout); };
+  }, [obStep]);
+
+  // Redirect when step 3 done
+  useEffect(() => {
+    if (obStep === 3 && completedCount === LLM_MODELS.length) {
+      const t = setTimeout(() => { window.location.href = "/dashboard"; }, 2500);
+      return () => clearTimeout(t);
+    }
+  }, [obStep, completedCount]);
+  // 90s max
+  useEffect(() => {
+    if (obStep === 3 && elapsed >= 90) window.location.href = "/dashboard";
+  }, [obStep, elapsed]);
 
   return (
     <>
@@ -339,6 +494,95 @@ export default function Home() {
           from{opacity:0;transform:translateY(24px) scale(0.9)}
           to{opacity:1;transform:translateY(0) scale(1)}
         }
+        .ob-overlay{
+          position:fixed;inset:0;z-index:200;
+          background:#fff;
+          overflow-y:auto;
+          animation:obFadeIn 0.35s var(--ease) both;
+        }
+        @keyframes obFadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+        .ob-close{
+          position:absolute;top:20px;right:24px;
+          width:40px;height:40px;border-radius:50%;border:1px solid #E8EAEB;
+          background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
+          transition:all 0.2s;z-index:10;
+        }
+        .ob-close:hover{background:#f5f5f5;border-color:#ccc}
+        .ob-inner{max-width:720px;margin:0 auto;padding:80px 24px 60px}
+        .ob-steps{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:48px}
+        .ob-step-dot{
+          width:32px;height:32px;border-radius:50%;
+          display:flex;align-items:center;justify-content:center;
+          font-size:13px;font-weight:600;transition:all 0.3s;
+        }
+        .ob-step-dot.active{background:#EF4623;color:#fff}
+        .ob-step-dot.done{background:#EF4623;color:#fff}
+        .ob-step-dot.pending{background:#E8EAEB;color:#8A9BA3}
+        .ob-step-label{font-size:13px;font-weight:500;transition:color 0.3s}
+        .ob-step-label.active{color:#2D3B42}
+        .ob-step-label.pending{color:#8A9BA3}
+        .ob-step-line{width:48px;height:1px;transition:background 0.3s}
+        .ob-step-line.done{background:#EF4623}
+        .ob-step-line.pending{background:#E8EAEB}
+        .ob-title{
+          font-family:'Instrument Serif',serif;font-size:32px;
+          color:#2D3B42;text-align:center;margin-bottom:8px;
+        }
+        .ob-subtitle{font-size:14px;color:#8A9BA3;text-align:center;line-height:1.6;margin-bottom:36px}
+        .ob-input{
+          width:100%;padding:14px 16px;border:1px solid #E8EAEB;border-radius:12px;
+          font-size:14px;font-family:'Manrope',sans-serif;color:#2D3B42;
+          outline:none;transition:border-color 0.2s;
+        }
+        .ob-input:focus{border-color:#EF4623}
+        .ob-input::placeholder{color:#8A9BA3}
+        .ob-select{
+          width:100%;padding:14px 16px;border:1px solid #E8EAEB;border-radius:12px;
+          font-size:14px;font-family:'Manrope',sans-serif;color:#2D3B42;
+          outline:none;background:#fff;cursor:pointer;appearance:none;
+          background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A9BA3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+          background-repeat:no-repeat;background-position:right 16px center;
+        }
+        .ob-btn{
+          width:100%;padding:16px;border-radius:30px;border:none;
+          font-size:15px;font-weight:700;font-family:'Manrope',sans-serif;
+          cursor:pointer;transition:all 0.3s var(--ease);
+          display:flex;align-items:center;justify-content:center;gap:8px;
+        }
+        .ob-btn-primary{
+          background:#EF4623;color:#fff;
+          box-shadow:0 8px 24px rgba(239,70,35,0.2);
+        }
+        .ob-btn-primary:hover{transform:translateY(-1px);box-shadow:0 12px 32px rgba(239,70,35,0.3)}
+        .ob-btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none;box-shadow:none}
+        .ob-topic-item{
+          display:flex;align-items:center;gap:12px;
+          padding:12px 16px;border-radius:12px;cursor:pointer;
+          transition:background 0.2s;
+        }
+        .ob-topic-item:hover{background:#FAFAFA}
+        .ob-topic-item.selected{background:#FDF1EE}
+        .ob-checkbox{
+          width:20px;height:20px;border-radius:6px;border:2px solid #E8EAEB;
+          display:flex;align-items:center;justify-content:center;flex-shrink:0;
+          transition:all 0.2s;cursor:pointer;
+        }
+        .ob-checkbox.checked{background:#EF4623;border-color:#EF4623}
+        .ob-prompt-row{
+          display:flex;align-items:center;gap:10px;
+          padding:10px 14px;border:1px solid #E8EAEB;border-radius:10px;
+          margin-bottom:8px;transition:all 0.2s;
+        }
+        .ob-prompt-row:hover{border-color:#ccc}
+        .ob-model-row{
+          display:flex;align-items:center;gap:14px;
+          padding:14px 18px;margin-bottom:8px;
+          border-radius:12px;transition:all 0.3s;
+        }
+        .ob-model-row.waiting{background:#FAFAFA;border:1px solid #E8EAEB}
+        .ob-model-row.querying{background:#FDF1EE;border:1px solid rgba(239,70,35,0.13)}
+        .ob-model-row.done{background:#fff;border:1px solid #E8EAEB}
+        @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
         @media(max-width:768px){
           .lp-nav ul{display:none}
           .lp-nav{padding:16px 20px}
@@ -349,6 +593,7 @@ export default function Home() {
           .hero{padding:120px 20px 60px}
           .cta-section{margin:0 20px 60px;padding:60px 32px;border-radius:40px}
           .sim-grid{grid-template-columns:1fr}
+          .ob-inner{padding:60px 16px 40px}
         }
       `}</style>
 
@@ -364,7 +609,7 @@ export default function Home() {
           <li><a href="#pricing">Pricing</a></li>
           <li><a href="#">Blog</a></li>
         </ul>
-        <Link href="/signup" className="nav-cta">Start Free</Link>
+        <button onClick={openOnboarding} className="nav-cta" style={{ border: "none", cursor: "pointer" }}>Start Free</button>
       </nav>
 
       {/* Hero */}
@@ -375,7 +620,7 @@ export default function Home() {
         <h1 className="lp-h1 fade-up delay-1">Be the brand<br /><span className="ai-cycle-wrap"><span key={aiIndex} className="ai-cycle-text">{AI_LOGOS[aiIndex].logo}</span></span><br />recommends</h1>
         <p className="hero-sub fade-up delay-2">Track exactly how your brand appears across ChatGPT, Perplexity, Google AI Overviews and every major AI engine. Know where you stand. Know what to fix.</p>
         <div className="hero-ctas fade-up delay-3">
-          <Link href="/signup" className="btn-primary">Start for free</Link>
+          <button onClick={openOnboarding} className="btn-primary" style={{ border: "none", cursor: "pointer" }}>Start for free</button>
           <a href="#how-it-works" className="btn-ghost">See how it works</a>
         </div>
         <div className="trust-bar fade-up delay-4">
@@ -566,7 +811,7 @@ export default function Home() {
                 <li>Daily tracking</li>
                 <li>Email alerts</li>
               </ul>
-              <Link href="/signup" className="price-btn">Get started</Link>
+              <button onClick={openOnboarding} className="price-btn" style={{ border: "none", cursor: "pointer" }}>Get started</button>
             </div>
             <div className="price-card featured">
               <div className="price-badge">Most Popular</div>
@@ -582,7 +827,7 @@ export default function Home() {
                 <li>Smart alerts + reports</li>
                 <li>Content gap analysis</li>
               </ul>
-              <Link href="/signup" className="price-btn">Get started</Link>
+              <button onClick={openOnboarding} className="price-btn" style={{ border: "none", cursor: "pointer" }}>Get started</button>
             </div>
             <div className="price-card">
               <div className="price-label">Agency</div>
@@ -597,7 +842,7 @@ export default function Home() {
                 <li>API access</li>
                 <li>Multi-user seats</li>
               </ul>
-              <Link href="/signup" className="price-btn">Get started</Link>
+              <button onClick={openOnboarding} className="price-btn" style={{ border: "none", cursor: "pointer" }}>Get started</button>
             </div>
           </div>
         </div>
@@ -608,7 +853,7 @@ export default function Home() {
         <div className="cta-dots"></div>
         <h2 className="cta-h2">Leave your trace.<br />Start today.</h2>
         <p className="cta-sub">Your competitors are already tracking their AI visibility. Don&apos;t fall behind.</p>
-        <Link href="/signup" className="cta-btn">Start free — no credit card</Link>
+        <button onClick={openOnboarding} className="cta-btn" style={{ border: "none", cursor: "pointer" }}>Start free — no credit card</button>
         <div className="cta-trust">
           <span>✓ Free 14-day trial</span>
           <span>✓ Cancel anytime</span>
@@ -662,6 +907,246 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* ── Onboarding Overlay ── */}
+      {showOnboarding && (
+        <div className="ob-overlay">
+          <button className="ob-close" onClick={() => { setShowOnboarding(false); document.body.style.overflow = ""; }}>
+            <X style={{ width: 18, height: 18, color: "#8A9BA3" }} />
+          </button>
+          <div className="ob-inner">
+            {/* Step indicator */}
+            <div className="ob-steps">
+              {[{ num: 1, label: "Brand" }, { num: 2, label: "Prompts" }, { num: 3, label: "Setup" }].map((s, i, arr) => (
+                <div key={s.num} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div className={`ob-step-dot ${s.num < obStep ? "done" : s.num === obStep ? "active" : "pending"}`}>
+                      {s.num < obStep ? "✓" : s.num}
+                    </div>
+                    <span className={`ob-step-label ${s.num <= obStep ? "active" : "pending"}`}>{s.label}</span>
+                  </div>
+                  {i < arr.length - 1 && <div className={`ob-step-line ${s.num < obStep ? "done" : "pending"}`} />}
+                </div>
+              ))}
+            </div>
+
+            {/* ── Step 1: Brand ── */}
+            {obStep === 1 && (
+              <div>
+                <h2 className="ob-title">Tell us about your brand</h2>
+                <p className="ob-subtitle">We&apos;ll use this to find how your brand appears across AI search engines.</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#4A5D66", marginBottom: 6, display: "block" }}>Website URL</label>
+                    <div style={{ position: "relative" }}>
+                      <Globe style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#8A9BA3" }} />
+                      <input
+                        className="ob-input"
+                        style={{ paddingLeft: 40 }}
+                        placeholder="https://yourbrand.com"
+                        value={url}
+                        onChange={e => setUrl(e.target.value)}
+                        onBlur={handleUrlBlur}
+                      />
+                    </div>
+                  </div>
+                  {detecting && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "#FDF1EE", borderRadius: 10 }}>
+                      <Loader2 style={{ width: 14, height: 14, color: "#EF4623", animation: "spin 1s linear infinite" }} />
+                      <span style={{ fontSize: 13, color: "#EF4623", fontWeight: 500 }}>Detecting brand...</span>
+                    </div>
+                  )}
+                  {brandName && !detecting && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "#ECFDF5", borderRadius: 10 }}>
+                      <Check style={{ width: 14, height: 14, color: "#047857" }} />
+                      <span style={{ fontSize: 13, color: "#047857", fontWeight: 600 }}>Brand detected: {brandName}</span>
+                    </div>
+                  )}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: "#4A5D66", marginBottom: 6, display: "block" }}>Market</label>
+                      <select className="ob-select" value={market} onChange={e => setMarket(e.target.value)}>
+                        {MARKETS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: "#4A5D66", marginBottom: 6, display: "block" }}>Language</label>
+                      <select className="ob-select" value={language} onChange={e => setLanguage(e.target.value)}>
+                        {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <button
+                    className="ob-btn ob-btn-primary"
+                    disabled={!url.trim() || analysing}
+                    onClick={handleStep1Submit}
+                    style={{ marginTop: 8 }}
+                  >
+                    {analysing ? (
+                      <><Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} /> Analysing your brand...</>
+                    ) : "Analyse my brand"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── Step 2: Prompts ── */}
+            {obStep === 2 && (
+              <div>
+                <h2 className="ob-title">Select your tracking prompts</h2>
+                <p className="ob-subtitle">We found {totalChecked} prompts across {topics.filter(t => t.checked).length} topics that people ask AI about your market.</p>
+                <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 20, minHeight: 400 }}>
+                  {/* Left: topics */}
+                  <div style={{ borderRight: "1px solid #E8EAEB", paddingRight: 16 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "#8A9BA3", marginBottom: 12 }}>Topics</div>
+                    {topics.map(t => (
+                      <div
+                        key={t.id}
+                        className={`ob-topic-item${selectedTopicId === t.id ? " selected" : ""}`}
+                        onClick={() => setSelectedTopicId(t.id)}
+                      >
+                        <div className={`ob-checkbox${t.checked ? " checked" : ""}`} onClick={e => { e.stopPropagation(); toggleTopic(t.id); }}>
+                          {t.checked && <Check style={{ width: 12, height: 12, color: "#fff" }} />}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: "#2D3B42" }}>{t.name}</div>
+                          <div style={{ fontSize: 11, color: "#8A9BA3" }}>{t.prompts.filter(p => p.checked).length} prompts</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Right: prompts for selected topic */}
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: "#2D3B42" }}>{selectedTopic?.name}</span>
+                      <span style={{ fontSize: 12, color: "#8A9BA3", fontWeight: 600 }}>{totalChecked}/50 prompts</span>
+                    </div>
+                    <div style={{ maxHeight: 320, overflowY: "auto" }}>
+                      {selectedTopic?.prompts.map(p => (
+                        <div key={p.id} className="ob-prompt-row">
+                          <div className={`ob-checkbox${p.checked ? " checked" : ""}`} onClick={() => togglePrompt(selectedTopicId, p.id)} style={{ width: 18, height: 18, borderRadius: 5 }}>
+                            {p.checked && <Check style={{ width: 10, height: 10, color: "#fff" }} />}
+                          </div>
+                          <span style={{ flex: 1, fontSize: 13, color: "#2D3B42" }}>{p.text}</span>
+                          <span style={{ fontSize: 11, color: "#8A9BA3", fontWeight: 600 }}>{p.volume}</span>
+                          <button onClick={() => removePrompt(selectedTopicId, p.id)} style={{ background: "none", border: "none", cursor: "pointer", padding: 2 }}>
+                            <X style={{ width: 14, height: 14, color: "#8A9BA3" }} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Add prompt */}
+                    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                      <input
+                        className="ob-input"
+                        style={{ flex: 1, padding: "10px 14px", fontSize: 13 }}
+                        placeholder="Add a custom prompt..."
+                        value={newPromptText}
+                        onChange={e => setNewPromptText(e.target.value)}
+                        onKeyDown={e => e.key === "Enter" && addPrompt()}
+                      />
+                      <button onClick={addPrompt} style={{ background: "#FDF1EE", border: "none", borderRadius: 10, padding: "0 14px", cursor: "pointer", display: "flex", alignItems: "center" }}>
+                        <Plus style={{ width: 16, height: 16, color: "#EF4623" }} />
+                      </button>
+                    </div>
+                    <button
+                      className="ob-btn ob-btn-primary"
+                      style={{ marginTop: 20 }}
+                      disabled={totalChecked === 0}
+                      onClick={() => setObStep(3)}
+                    >
+                      Start tracking ({totalChecked} prompts)
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Step 3: Running analysis ── */}
+            {obStep === 3 && (
+              <div>
+                <h2 className="ob-title">
+                  {completedCount === LLM_MODELS.length ? "Your dashboard is ready!" : "Running your first analysis..."}
+                </h2>
+                <p className="ob-subtitle">
+                  {completedCount === LLM_MODELS.length
+                    ? "We found your brand across AI engines. Redirecting to your dashboard..."
+                    : "We're querying each AI engine with your prompts. This usually takes about 20 seconds."
+                  }
+                </p>
+                <div style={{ maxWidth: 480, margin: "0 auto" }}>
+                  {LLM_MODELS.map((model, i) => (
+                    <div key={model.key} className={`ob-model-row ${modelStatuses[i]}`}>
+                      <span style={{ fontSize: 20, width: 28, textAlign: "center" }}>{model.icon}</span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: "#2D3B42" }}>{model.name}</span>
+                          {modelStatuses[i] === "querying" && <span style={{ fontSize: 12, color: "#EF4623", fontWeight: 500 }}>Querying...</span>}
+                          {modelStatuses[i] === "done" && <span style={{ fontSize: 12, color: "#047857", fontWeight: 500 }}>✓ Done</span>}
+                          {modelStatuses[i] === "waiting" && <span style={{ fontSize: 12, color: "#8A9BA3" }}>Waiting</span>}
+                        </div>
+                        {modelStatuses[i] === "done" && modelResults[i] && (
+                          <div style={{ display: "flex", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
+                            <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: modelResults[i]!.mentioned ? "#ECFDF5" : "#FEF2F2", color: modelResults[i]!.mentioned ? "#047857" : "#DC2626" }}>
+                              {modelResults[i]!.mentioned ? "✓ Mentioned" : "✗ Not mentioned"}
+                            </span>
+                            {modelResults[i]!.position && (
+                              <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: "#FDF1EE", color: "#EF4623" }}>
+                                Position #{modelResults[i]!.position}
+                              </span>
+                            )}
+                            <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: "#F0F0F4", color: "#4A5D66" }}>
+                              {modelResults[i]!.sentiment}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ width: 24, display: "flex", justifyContent: "center" }}>
+                        {modelStatuses[i] === "waiting" && <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #E8EAEB" }} />}
+                        {modelStatuses[i] === "querying" && <Loader2 style={{ width: 18, height: 18, color: "#EF4623", animation: "spin 1s linear infinite" }} />}
+                        {modelStatuses[i] === "done" && (
+                          <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#047857", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Check style={{ width: 12, height: 12, color: "#fff" }} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Progress bar */}
+                  <div style={{ marginTop: 20, textAlign: "center" }}>
+                    <div style={{ height: 4, background: "#E8EAEB", borderRadius: 2, overflow: "hidden", marginBottom: 8 }}>
+                      <div style={{ height: "100%", borderRadius: 2, transition: "width 0.5s", background: completedCount === LLM_MODELS.length ? "#047857" : "#EF4623", width: `${(completedCount / LLM_MODELS.length) * 100}%` }} />
+                    </div>
+                    <span style={{ fontSize: 12, color: "#8A9BA3" }}>{completedCount}/{LLM_MODELS.length} engines complete · {elapsed}s elapsed</span>
+                  </div>
+
+                  {/* Early results teaser */}
+                  {completedCount >= 2 && (
+                    <div style={{ marginTop: 24, padding: 18, background: "#FDF1EE", border: "1px solid rgba(239,70,35,0.08)", borderRadius: 12 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "#EF4623", marginBottom: 12 }}>Early results</div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                        <div style={{ background: "#fff", borderRadius: 8, padding: 12, textAlign: "center" }}>
+                          <div style={{ fontSize: 24, fontWeight: 700, color: "#2D3B42", fontFamily: "'Instrument Serif', serif" }}>{Math.round((completedCount / LLM_MODELS.length) * 74)}%</div>
+                          <div style={{ fontSize: 10, color: "#8A9BA3", marginTop: 2 }}>Visibility</div>
+                        </div>
+                        <div style={{ background: "#fff", borderRadius: 8, padding: 12, textAlign: "center" }}>
+                          <div style={{ fontSize: 24, fontWeight: 700, color: "#2D3B42", fontFamily: "'Instrument Serif', serif" }}>#2.5</div>
+                          <div style={{ fontSize: 10, color: "#8A9BA3", marginTop: 2 }}>Avg Position</div>
+                        </div>
+                        <div style={{ background: "#fff", borderRadius: 8, padding: 12, textAlign: "center" }}>
+                          <div style={{ fontSize: 24, fontWeight: 700, color: "#047857", fontFamily: "'Instrument Serif', serif" }}>80%</div>
+                          <div style={{ fontSize: 10, color: "#8A9BA3", marginTop: 2 }}>Positive</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
