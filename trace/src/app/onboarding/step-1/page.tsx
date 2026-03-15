@@ -70,26 +70,58 @@ export default function Step1() {
   const [brandName, setBrandName] = useState("");
   const [detecting, setDetecting] = useState(false);
   const [analysing, setAnalysing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleUrlBlur = () => {
     if (url.trim() && !brandName) {
       setDetecting(true);
-      // Simulate brand detection from URL
       setTimeout(() => {
-        const domain = url.replace(/https?:\/\/(www\.)?/, "").split(/[/?#]/)[0];
-        const name = domain.split(".")[0];
+        const cleanUrl = url.replace(/https?:\/\/(www\.)?/, "").split(/[/?#]/)[0];
+        const name = cleanUrl.split(".")[0];
         setBrandName(name.charAt(0).toUpperCase() + name.slice(1));
         setDetecting(false);
       }, 1200);
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setAnalysing(true);
-    // Simulate auto-generate trigger
-    setTimeout(() => {
+    setError(null);
+
+    try {
+      const res = await fetch("/api/onboarding/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brandUrl: url.trim(),
+          market,
+          language,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to analyse brand");
+      }
+
+      const result = await res.json();
+
+      // Store results for step-2 to consume
+      localStorage.setItem("trace_onboarding", JSON.stringify({
+        brandUrl: url.trim(),
+        brandName: result.brandName || brandName,
+        industry: result.industry,
+        market,
+        language,
+        topics: result.topics,
+        competitors: result.competitors,
+      }));
+
       router.push("/onboarding/step-2");
-    }, 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      setAnalysing(false);
+    }
   };
 
   const isValid = url.trim().length > 0;
@@ -197,6 +229,17 @@ export default function Step1() {
           </div>
         </div>
 
+        {/* Error message */}
+        {error && (
+          <div style={{
+            marginBottom: 16, padding: "10px 14px",
+            background: "#FEF2F2", border: "1px solid rgba(220,38,38,0.1)",
+            borderRadius: 8, fontSize: 13, color: "#DC2626",
+          }}>
+            {error}
+          </div>
+        )}
+
         {/* CTA */}
         <button
           onClick={handleSubmit}
@@ -214,8 +257,14 @@ export default function Step1() {
           }}
         >
           {analysing && <Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} />}
-          {analysing ? "Analysing your brand..." : "Analyse my brand"}
+          {analysing ? "Scanning your website..." : "Analyse my brand"}
         </button>
+
+        {analysing && (
+          <p style={{ textAlign: "center", fontSize: 12, color: "#8A9BA3", marginTop: 12 }}>
+            Fetching your website and generating topics & prompts with AI. This may take 10–20 seconds.
+          </p>
+        )}
       </div>
 
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>

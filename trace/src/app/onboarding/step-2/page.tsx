@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Check, X, Plus } from "lucide-react";
+import { X, Plus } from "lucide-react";
 
 interface Prompt {
   id: string;
@@ -18,49 +18,26 @@ interface Topic {
   prompts: Prompt[];
 }
 
-const MOCK_TOPICS: Topic[] = [
-  {
-    id: "t1", name: "Product Recommendations", checked: true,
-    prompts: [
-      { id: "p1", text: "What are the best tools for brand monitoring?", volume: "1.2K", checked: true },
-      { id: "p2", text: "How does AI brand tracking work?", volume: "890", checked: true },
-      { id: "p3", text: "What features should a brand monitoring tool have?", volume: "650", checked: true },
-      { id: "p4", text: "Best AI-powered marketing tools in 2026", volume: "2.4K", checked: true },
-    ],
-  },
-  {
-    id: "t2", name: "Competitor Comparison", checked: true,
-    prompts: [
-      { id: "p5", text: "Best brand monitoring tools compared", volume: "2.1K", checked: true },
-      { id: "p6", text: "Which AI search tracking tool is the best?", volume: "1.5K", checked: true },
-      { id: "p7", text: "Top alternatives for brand tracking software", volume: "980", checked: true },
-    ],
-  },
-  {
-    id: "t3", name: "Industry Trends", checked: true,
-    prompts: [
-      { id: "p8", text: "How is AI changing search behavior?", volume: "3.4K", checked: true },
-      { id: "p9", text: "What is GEO (Generative Engine Optimization)?", volume: "2.8K", checked: true },
-      { id: "p10", text: "Will AI replace traditional SEO?", volume: "1.9K", checked: true },
-      { id: "p11", text: "Future of AI search engines", volume: "1.6K", checked: true },
-    ],
-  },
-  {
-    id: "t4", name: "Use Cases", checked: true,
-    prompts: [
-      { id: "p12", text: "How to track brand mentions in AI responses?", volume: "1.1K", checked: true },
-      { id: "p13", text: "How to improve brand visibility in ChatGPT?", volume: "980", checked: true },
-      { id: "p14", text: "How do brands optimize for AI search?", volume: "720", checked: false },
-    ],
-  },
-  {
-    id: "t5", name: "Buying Guides", checked: false,
-    prompts: [
-      { id: "p15", text: "How much does AI brand monitoring cost?", volume: "720", checked: false },
-      { id: "p16", text: "Free AI brand monitoring tools", volume: "1.8K", checked: false },
-    ],
-  },
-];
+function formatVolume(v: number): string {
+  if (v >= 1000) return `${(v / 1000).toFixed(1).replace(/\.0$/, "")}K`;
+  return String(v);
+}
+
+function buildTopicsFromData(
+  data: { name: string; prompts: { text: string; tags: string[]; estimatedVolume: number }[] }[]
+): Topic[] {
+  return data.map((t, ti) => ({
+    id: `t${ti + 1}`,
+    name: t.name,
+    checked: true,
+    prompts: t.prompts.map((p, pi) => ({
+      id: `p${ti + 1}-${pi + 1}`,
+      text: p.text,
+      volume: formatVolume(p.estimatedVolume),
+      checked: true,
+    })),
+  }));
+}
 
 function StepIndicator({ current }: { current: number }) {
   const steps = [
@@ -95,9 +72,31 @@ function StepIndicator({ current }: { current: number }) {
 
 export default function Step2() {
   const router = useRouter();
-  const [topics, setTopics] = useState<Topic[]>(MOCK_TOPICS);
-  const [selectedTopicId, setSelectedTopicId] = useState<string>("t1");
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [selectedTopicId, setSelectedTopicId] = useState<string>("");
   const [newPromptText, setNewPromptText] = useState("");
+  const [brandName, setBrandName] = useState("");
+
+  // Load data from localStorage (set by step-1)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("trace_onboarding");
+      if (raw) {
+        const data = JSON.parse(raw);
+        setBrandName(data.brandName || "");
+        if (data.topics && data.topics.length > 0) {
+          const built = buildTopicsFromData(data.topics);
+          setTopics(built);
+          setSelectedTopicId(built[0]?.id || "");
+          return;
+        }
+      }
+    } catch {
+      // fall through to redirect
+    }
+    // No data — send back to step 1
+    router.replace("/onboarding/step-1");
+  }, [router]);
 
   const MAX_PROMPTS = 50;
   const totalChecked = topics.flatMap(t => t.prompts).filter(p => p.checked).length;
@@ -139,6 +138,14 @@ export default function Step2() {
     setNewPromptText("");
   };
 
+  if (topics.length === 0) {
+    return (
+      <div style={{ fontFamily: "'Manrope', sans-serif", textAlign: "center", paddingTop: 120 }}>
+        <p style={{ color: "#8A9BA3", fontSize: 14 }}>Loading prompts...</p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ fontFamily: "'Manrope', sans-serif", maxWidth: 760, margin: "0 auto" }}>
       <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -149,7 +156,7 @@ export default function Step2() {
           Review your prompts
         </h1>
         <p style={{ fontSize: 14, color: "#8A9BA3", lineHeight: 1.6 }}>
-          We generated prompts based on your brand. Select the ones you want to track.
+          We generated prompts based on {brandName ? <strong>{brandName}</strong> : "your brand"}. Select the ones you want to track.
         </p>
       </div>
 
