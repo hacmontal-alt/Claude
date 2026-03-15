@@ -338,7 +338,7 @@ export default function Home() {
         </div>
         <ul>
           <li><a href="#">Product</a></li>
-          <li><a href="https://calendly.com/trace-demo" target="_blank" rel="noopener noreferrer">How it works</a></li>
+          <li><a href="#how-it-works">How it works</a></li>
           <li><a href="#pricing">Pricing</a></li>
           <li><a href="#">Blog</a></li>
         </ul>
