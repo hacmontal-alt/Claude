@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 const CALENDLY_URL = "https://calendly.com/trace-demo";
 
@@ -10,6 +12,17 @@ const AI_NAMES = ["ChatGPT", "Gemini", "Perplexity", "Grok", "Claude", "AI Overv
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
   const [aiIndex, setAiIndex] = useState(0);
+  const [user, setUser] = useState<User | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -23,6 +36,13 @@ export default function Home() {
     }, 2200);
     return () => clearInterval(interval);
   }, []);
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setUser(null);
+    setUserMenuOpen(false);
+  }
 
   return (
     <>
@@ -63,6 +83,43 @@ export default function Home() {
           transition:all 0.3s var(--ease);
         }
         .nav-cta:hover{transform:translateY(-1px);box-shadow:0 12px 32px rgba(239,70,35,0.3)}
+        .nav-signin{
+          font-size:13px;font-weight:600;color:var(--ink);
+          text-decoration:none;padding:10px 18px;
+          border-radius:30px;border:1px solid rgba(45,59,66,0.12);
+          transition:all 0.2s;margin-right:8px;
+        }
+        .nav-signin:hover{border-color:rgba(45,59,66,0.3);background:rgba(45,59,66,0.03)}
+        .nav-user-wrap{position:relative;display:flex;align-items:center;gap:10px}
+        .nav-avatar{
+          width:36px;height:36px;border-radius:50%;
+          background:var(--coral);color:#fff;
+          display:flex;align-items:center;justify-content:center;
+          font-size:14px;font-weight:700;cursor:pointer;
+          transition:transform 0.2s var(--ease);flex-shrink:0;
+        }
+        .nav-avatar:hover{transform:scale(1.08)}
+        .nav-user-menu{
+          position:absolute;top:48px;right:0;
+          background:#fff;border:1px solid rgba(45,59,66,0.08);
+          border-radius:14px;padding:8px;min-width:180px;
+          box-shadow:0 12px 32px rgba(45,59,66,0.12);
+          z-index:200;
+        }
+        .nav-user-menu a,.nav-user-menu button{
+          display:block;width:100%;text-align:left;
+          padding:10px 14px;border-radius:8px;
+          font-size:13px;font-weight:500;color:var(--ink);
+          text-decoration:none;border:none;background:none;
+          cursor:pointer;font-family:'Manrope',sans-serif;
+          transition:background 0.15s;
+        }
+        .nav-user-menu a:hover,.nav-user-menu button:hover{background:var(--peach)}
+        .nav-user-email{
+          padding:8px 14px 12px;font-size:12px;color:rgba(45,59,66,0.5);
+          border-bottom:1px solid rgba(45,59,66,0.06);margin-bottom:4px;
+          overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+        }
         .hero{
           padding:120px 40px 60px;
           text-align:center;
@@ -342,7 +399,27 @@ export default function Home() {
           <li><a href="#pricing">Pricing</a></li>
           <li><a href="#">Blog</a></li>
         </ul>
-        <Link href="/signup" className="nav-cta">Start Free</Link>
+        {user ? (
+          <div className="nav-user-wrap">
+            <Link href="/overview" className="nav-cta">Dashboard</Link>
+            <div className="nav-avatar" onClick={() => setUserMenuOpen(!userMenuOpen)}>
+              {(user.user_metadata?.full_name || user.email || "U")[0].toUpperCase()}
+            </div>
+            {userMenuOpen && (
+              <div className="nav-user-menu">
+                <div className="nav-user-email">{user.email}</div>
+                <Link href="/overview" onClick={() => setUserMenuOpen(false)}>Dashboard</Link>
+                <Link href="/settings/project" onClick={() => setUserMenuOpen(false)}>Settings</Link>
+                <button onClick={handleSignOut}>Sign out</button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <Link href="/login" className="nav-signin">Sign in</Link>
+            <Link href="/signup" className="nav-cta">Start Free</Link>
+          </div>
+        )}
       </nav>
 
       {/* Hero */}
@@ -353,8 +430,14 @@ export default function Home() {
         <h1 className="lp-h1 fade-up delay-1">Be the brand<br /><em key={aiIndex} className="ai-cycle-text">{AI_NAMES[aiIndex]}</em><br />recommends</h1>
         <p className="hero-sub fade-up delay-2">Track exactly how your brand appears across ChatGPT, Perplexity, Google AI Overviews and every major AI engine. Know where you stand. Know what to fix.</p>
         <div className="hero-ctas fade-up delay-3">
-          <Link href="/signup" className="btn-primary">Start for free</Link>
-          <a href={CALENDLY_URL} target="_blank" rel="noopener noreferrer" className="btn-ghost">Schedule a demo</a>
+          {user ? (
+            <Link href="/overview" className="btn-primary">Go to Dashboard</Link>
+          ) : (
+            <>
+              <Link href="/signup" className="btn-primary">Start for free</Link>
+              <a href={CALENDLY_URL} target="_blank" rel="noopener noreferrer" className="btn-ghost">Schedule a demo</a>
+            </>
+          )}
         </div>
         <div className="trust-bar fade-up delay-4">
           <span>Trusted by</span>

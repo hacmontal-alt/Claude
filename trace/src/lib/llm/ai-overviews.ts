@@ -1,5 +1,6 @@
 import type { LLMQueryResult } from '@/types';
 import { parseResponse, extractDomain } from './parser';
+import { queryGoogleSerp } from '@/lib/brightdata/serp';
 
 export async function queryAIOverviews(
   prompt: string,
@@ -8,14 +9,9 @@ export async function queryAIOverviews(
   competitors: string[]
 ): Promise<LLMQueryResult> {
   try {
-    const response = await fetch(
-      `https://serpapi.com/search?q=${encodeURIComponent(prompt)}&api_key=${process.env.SERPER_API_KEY}&engine=google`
-    );
+    const serpResult = await queryGoogleSerp(prompt, { aiOverview: true });
 
-    const data = await response.json();
-    const aiOverview = data.ai_overview;
-
-    if (!aiOverview) {
+    if (!serpResult.aiOverview) {
       return {
         model: 'ai_overviews',
         promptId,
@@ -29,16 +25,17 @@ export async function queryAIOverviews(
       };
     }
 
-    const rawResponse = typeof aiOverview === 'string'
-      ? aiOverview
-      : aiOverview.text || aiOverview.snippet || JSON.stringify(aiOverview);
+    const rawResponse = serpResult.aiOverview;
 
     const citedSources: { url: string; domain: string }[] = [];
-    const sources = aiOverview.sources || aiOverview.references || [];
-    for (const source of sources) {
-      const url = source.link || source.url || '';
-      if (url) {
-        citedSources.push({ url, domain: extractDomain(url) });
+    for (const source of serpResult.aiOverviewSources) {
+      citedSources.push({ url: source.url, domain: extractDomain(source.url) });
+    }
+
+    // Also include top organic results as additional context
+    for (const organic of serpResult.organicResults.slice(0, 5)) {
+      if (organic.url && !citedSources.find(s => s.url === organic.url)) {
+        citedSources.push({ url: organic.url, domain: extractDomain(organic.url) });
       }
     }
 
@@ -49,7 +46,7 @@ export async function queryAIOverviews(
       promptId,
       rawResponse,
       citedSources,
-      serpQueries: [prompt],
+      serpQueries: [prompt, ...serpResult.relatedSearches],
       ...parsed,
     };
   } catch (error) {
