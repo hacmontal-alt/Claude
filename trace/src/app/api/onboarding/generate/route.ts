@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import type { AutoGenerateResult } from "@/types";
-import { scrapePage } from "@/lib/brightdata/web-scraper";
 
 const SYSTEM_PROMPT = `You are an expert AI search strategist who deeply understands how real people use ChatGPT, Perplexity, Gemini, and other AI chatbots to research products, services, and brands before making decisions.
 
@@ -69,42 +68,34 @@ export async function POST(request: NextRequest) {
   }
 
   // 1. Fetch and extract website content
-  // Prefer Bright Data for reliable scraping; fall back to basic fetch
   let siteContent = "";
   const normalizedUrl = brandUrl.startsWith("http") ? brandUrl : `https://${brandUrl}`;
 
   try {
-    if (process.env.BRIGHTDATA_API_TOKEN) {
-      // Use Bright Data Web Unlocker for reliable scraping
-      const scraped = await scrapePage(normalizedUrl);
-      siteContent = `Page title: ${scraped.title}\nMeta description: ${scraped.description}\n\nHeadings:\n${scraped.headings.join("\n")}\n\nPage content:\n${scraped.bodyText}`;
-    } else {
-      // Fallback: basic fetch
-      const res = await fetch(normalizedUrl, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        },
-        signal: AbortSignal.timeout(15000),
-      });
-      const html = await res.text();
+    const res = await fetch(normalizedUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+      signal: AbortSignal.timeout(15000),
+    });
+    const html = await res.text();
 
-      const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i);
-      const metaDescMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i);
-      const title = titleMatch?.[1]?.trim() || "";
-      const metaDesc = metaDescMatch?.[1]?.trim() || "";
+    const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i);
+    const metaDescMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i);
+    const title = titleMatch?.[1]?.trim() || "";
+    const metaDesc = metaDescMatch?.[1]?.trim() || "";
 
-      const bodyText = html
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
-        .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, "")
-        .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, "")
-        .replace(/<[^>]+>/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
+    const bodyText = html
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+      .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, "")
+      .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
 
-      siteContent = `Page title: ${title}\nMeta description: ${metaDesc}\n\nPage content:\n${bodyText.slice(0, 6000)}`;
-    }
+    siteContent = `Page title: ${title}\nMeta description: ${metaDesc}\n\nPage content:\n${bodyText.slice(0, 6000)}`;
   } catch {
     siteContent = `Brand website URL: ${brandUrl} (could not fetch — generate based on the domain name and URL structure)`;
   }
