@@ -28,7 +28,7 @@ const modelColors: Record<string, string> = {
 };
 
 export default function OverviewPage() {
-  const { activeBrand, results, sources, prompts, latestRun, hasRealData, loading, triggerAnalysis } = useBrand();
+  const { activeBrand, results, sources, prompts, latestRun, hasRealData, loading, analyzing, triggerAnalysis } = useBrand();
 
   // Compute metrics from real data or fall back to sample
   const computed = useMemo(() => {
@@ -134,7 +134,13 @@ export default function OverviewPage() {
 
   return (
     <div className="space-y-6">
-      {!hasRealData && (
+      {analyzing && (
+        <Callout type="info">
+          <span className="animate-pulse">Running analysis across AI models... This may take a few minutes.</span>
+        </Callout>
+      )}
+
+      {!analyzing && !hasRealData && (
         <Callout type="info">
           Showing sample data
           {activeBrand ? ` for ${activeBrand.brand_name}` : ""}. Run your first
@@ -150,7 +156,7 @@ export default function OverviewPage() {
         </Callout>
       )}
 
-      {hasRealData && latestRun && (
+      {!analyzing && hasRealData && latestRun && (
         <Callout type="success">
           Showing results from{" "}
           {new Date(latestRun.started_at).toLocaleDateString()} (

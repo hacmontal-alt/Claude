@@ -94,6 +94,7 @@ interface BrandContextValue {
 
   // State
   loading: boolean;
+  analyzing: boolean;
   hasRealData: boolean;
 
   // Actions
@@ -120,6 +121,7 @@ export function BrandProvider({ children }: { children: ReactNode }) {
   const [results, setResults] = useState<AnalysisResultData[]>([]);
   const [sources, setSources] = useState<CitedSourceData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [analyzing, setAnalyzing] = useState(false);
 
   const activeBrand = brands.find((b) => b.id === activeBrandId) ?? null;
   const hasRealData = results.length > 0;
@@ -200,18 +202,23 @@ export function BrandProvider({ children }: { children: ReactNode }) {
 
   const triggerAnalysis = useCallback(async () => {
     if (!activeBrandId) return null;
+    setAnalyzing(true);
     try {
-      const res = await fetch("/api/analysis/trigger", {
+      const res = await fetch("/api/analysis/run-direct", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ brandId: activeBrandId }),
       });
-      if (!res.ok) return null;
+      if (!res.ok) {
+        setAnalyzing(false);
+        return null;
+      }
       const data = await res.json();
-      // Refresh after triggering
-      setTimeout(() => refresh(), 2000);
+      await refresh();
+      setAnalyzing(false);
       return data;
     } catch {
+      setAnalyzing(false);
       return null;
     }
   }, [activeBrandId, refresh]);
@@ -228,6 +235,7 @@ export function BrandProvider({ children }: { children: ReactNode }) {
         results,
         sources,
         loading,
+        analyzing,
         hasRealData,
         setActiveBrandId,
         refresh,
