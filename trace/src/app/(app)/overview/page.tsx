@@ -159,14 +159,17 @@ export default function OverviewPage() {
       )}
 
       {!analyzing && !hasRealData && (
-        <Callout type="info">
-          Showing sample data{activeBrand ? ` for ${activeBrand.brand_name}` : ""} — connect your brand to see real results
-          {activeBrand && (
-            <button onClick={() => triggerAnalysis()} className="ml-2 underline font-semibold text-[#EF4623]">
-              Run analysis now
-            </button>
-          )}
-        </Callout>
+        <div className="space-y-3">
+          <Callout type="info">
+            Showing sample data{activeBrand ? ` for ${activeBrand.brand_name}` : ""} — run an analysis to see real results from AI models.
+          </Callout>
+          <button
+            onClick={() => triggerAnalysis()}
+            className="w-full py-3 px-6 rounded-lg bg-[#EF4623] text-white font-bold text-base hover:bg-[#D93D1E] transition-colors shadow-md"
+          >
+            Run Analysis Now
+          </button>
+        </div>
       )}
 
       {!analyzing && hasRealData && latestRun && (
