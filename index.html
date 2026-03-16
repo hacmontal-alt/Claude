@@ -2,620 +2,860 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Approach.</title>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=Unbounded:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{min-height:100vh;height:100%;font-family:'DM Sans',sans-serif;overflow:hidden;color:#1c1916}
-body{background:linear-gradient(168deg,#e5e8f0,#eae7f0,#ede5ea)}
-::-webkit-scrollbar{width:0;display:none}
-textarea,input{font-family:inherit}
-textarea:focus,input:focus,button:focus{outline:none}
-textarea{resize:none}
-body::before{content:'';position:fixed;inset:0;z-index:999;pointer-events:none;opacity:.03;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");background-size:150px 150px}
-@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes shimmer{0%,100%{opacity:.4}50%{opacity:.7}}
-@keyframes tabIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
-@keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-#app{max-width:430px;margin:0 auto;height:100vh;display:flex;flex-direction:column;overflow:hidden;position:relative}
-#tabContent{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:80px;scroll-behavior:smooth}
-/* NAV */
-#bottomNav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:rgba(229,232,240,.85);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-top:1px solid rgba(0,0,0,.06);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom,0)}
-.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 12px;cursor:pointer;transition:all .2s;border:none;background:none;font-family:inherit;gap:4px}
-.nav-icon{width:22px;height:22px;display:flex;align-items:center;justify-content:center}
-.nav-icon svg{width:20px;height:20px;stroke:rgba(28,25,22,.35);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:all .2s}
-.nav-tab.active .nav-icon svg{stroke:url(#navGrad)}
-.nav-lbl{font-size:10px;font-weight:500;color:rgba(28,25,22,.35);transition:color .2s;letter-spacing:.3px}
-.nav-tab.active .nav-lbl{background:linear-gradient(135deg,#c8714a,#b85c7a,#5a7a6e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:linear-gradient(168deg,#e5e8f0,#eae7f0,#ede5ea);
+--bg-dark:linear-gradient(175deg,#1e1c2a,#241824,#1a1c1e);
+--brand:linear-gradient(135deg,#c8714a,#b85c7a,#5a7a6e);
+--card:rgba(255,255,255,0.72);
+--card-border:rgba(255,255,255,0.38);
+--dark-surface:#1c1916;
+--text:#1a1a1a;
+--text-dim:#6b6b6b;
+--text-light:#fff;
+--radius:16px;
+--radius-sm:10px;
+--nav-h:72px;
+--safe-b:env(safe-area-inset-bottom,0px);
+--safe-t:env(safe-area-inset-top,0px);
+}
+html,body{
+height:100%;width:100%;overflow:hidden;
+font-family:'DM Sans',system-ui,sans-serif;
+-webkit-font-smoothing:antialiased;
+-webkit-tap-highlight-color:transparent;
+}
+body{display:flex;justify-content:center;background:var(--bg)}
+::-webkit-scrollbar{display:none}
+h1,h2,h3,h4{font-family:'Unbounded',sans-serif;font-weight:600}
+
+/* SHELL */
+#app{
+position:relative;width:100%;max-width:430px;height:100%;overflow:hidden;
+background:var(--bg);
+}
+/* Noise overlay */
+#app::after{
+content:'';position:absolute;inset:0;pointer-events:none;z-index:9999;
+opacity:0.028;
+background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+background-repeat:repeat;background-size:180px;
+}
+
 /* SCREENS */
-.screen{display:none;animation:tabIn .3s ease forwards}
-.screen.active{display:block}
-/* HEADER */
-.screen-header{padding:52px 24px 20px;position:sticky;top:0;z-index:10;background:linear-gradient(168deg,rgba(229,232,240,.95),rgba(234,231,240,.95),rgba(237,229,234,.95));-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
-.header-title{font-family:'Unbounded',sans-serif;font-size:28px;font-weight:600;color:#1c1916;letter-spacing:-.5px}
-.header-sub{font-size:11px;color:rgba(28,25,22,.4);margin-top:4px;font-weight:400;letter-spacing:.3px}
-.pad{padding:16px 20px 0}
-/* GLASS CARDS */
-.glass{background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.85);border-radius:16px;overflow:hidden}
-/* INPUT */
-.input-wrap{background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(0,0,0,.06);border-radius:14px;overflow:hidden;transition:all .25s;margin-bottom:10px}
-.input-wrap.focused{border-color:rgba(200,113,74,.3);box-shadow:0 0 0 3px rgba(200,113,74,.08)}
-.input-wrap textarea{width:100%;background:transparent;border:none;color:#1c1916;font-size:14px;line-height:1.7;padding:16px 16px 6px;font-weight:400}
-.input-wrap textarea::placeholder{color:rgba(28,25,22,.3)}
-.input-footer{display:flex;justify-content:space-between;align-items:center;padding:4px 16px 12px}
-.char-hint{color:rgba(28,25,22,.3);font-size:10px;letter-spacing:.5px}
-.clear-btn{background:none;border:none;color:rgba(28,25,22,.25);font-size:10px;cursor:pointer;font-family:inherit;letter-spacing:1px;text-transform:uppercase;transition:color .2s;font-weight:500}
-.clear-btn:hover{color:#1c1916}
-/* BUTTONS */
-.btn-primary{width:100%;height:52px;border-radius:14px;border:none;background:linear-gradient(135deg,#c8714a,#b85c7a,#5a7a6e);background-size:200% 200%;color:#fff;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;letter-spacing:.8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .25s;margin-bottom:14px;box-shadow:0 4px 16px rgba(184,92,122,.2)}
-.btn-primary:hover{box-shadow:0 6px 24px rgba(184,92,122,.3);transform:translateY(-1px)}
-.btn-primary:active{transform:scale(.98);box-shadow:0 2px 8px rgba(184,92,122,.15)}
-.btn-primary:disabled{background:rgba(28,25,22,.08);color:rgba(28,25,22,.25);cursor:default;box-shadow:none}
-.btn-primary:disabled:hover{transform:none;box-shadow:none}
-.btn-ghost{width:100%;height:44px;border-radius:12px;background:rgba(255,255,255,.5);border:1px solid rgba(0,0,0,.08);color:rgba(28,25,22,.5);font-size:12px;cursor:pointer;letter-spacing:.5px;font-family:inherit;transition:all .2s;margin-bottom:8px;font-weight:500}
-.btn-ghost:hover{background:rgba(255,255,255,.8);color:#1c1916}
-/* RESULT CARDS */
-.result-card{margin-bottom:10px;animation:fadeUp .4s ease forwards;opacity:0}
-.sit-card{padding:18px;background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.9);border-radius:16px}
-.card-tag{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(135deg,#c8714a,#b85c7a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px}
-.sit-text{color:rgba(28,25,22,.65);font-size:15px;line-height:1.7;font-style:italic;font-weight:300}
-.opener-card{padding:20px;border-radius:16px;background:rgba(255,255,255,.8);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(200,113,74,.12);margin-bottom:10px}
-.opener-type-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.opener-type-num{width:24px;height:24px;border-radius:8px;background:linear-gradient(135deg,rgba(200,113,74,.12),rgba(184,92,122,.12));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#b85c7a;flex-shrink:0}
-.opener-type-label{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(135deg,#c8714a,#b85c7a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.opener-copy{background:none;border:none;cursor:pointer;font-family:inherit;font-size:9px;margin-left:auto;color:rgba(28,25,22,.3);letter-spacing:1.5px;text-transform:uppercase;transition:color .2s;font-weight:500}
-.opener-copy:hover{color:#1c1916}
-.opener-quote{color:#1c1916;font-size:19px;line-height:1.45;font-weight:300;margin-bottom:14px;font-style:italic}
-.opener-followup{padding-left:14px;color:rgba(28,25,22,.5);font-size:13px;line-height:1.65;margin-bottom:12px;border-left:2px solid rgba(200,113,74,.3);font-weight:400}
-.opener-why{background:rgba(0,0,0,.03);border-radius:10px;padding:10px 14px;color:rgba(28,25,22,.45);font-size:12px;line-height:1.6}
-.tip-row{display:flex;gap:8px;margin-bottom:10px}
-.tip-card{flex:1;padding:14px;background:rgba(255,255,255,.65);border-radius:14px;border:1px solid rgba(0,0,0,.05);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-.tip-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:600;background:linear-gradient(135deg,#c8714a,#b85c7a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:7px}
-.tip-text{color:rgba(28,25,22,.55);font-size:12px;line-height:1.65;font-weight:400}
-/* SKELETON */
-.skel{border-radius:14px;border:1px solid rgba(0,0,0,.04);background:rgba(255,255,255,.5);padding:18px;margin-bottom:10px;animation:shimmer 1.7s ease-in-out infinite}
-.skel-line{background:rgba(28,25,22,.06);border-radius:6px;margin-bottom:8px}
-/* EXAMPLES */
-.examples-label{color:rgba(28,25,22,.35);font-size:10px;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;margin-top:6px;font-weight:600}
-.example-chip{display:block;width:100%;text-align:left;padding:12px 0;margin-bottom:0;background:transparent;border:none;border-bottom:1px solid rgba(0,0,0,.05);color:rgba(28,25,22,.5);font-size:13px;line-height:1.5;cursor:pointer;font-family:inherit;transition:all .2s;font-weight:400}
-.example-chip:hover{color:#1c1916}
-.example-chip:last-child{border-bottom:none}
-/* ERROR */
-.error-box{padding:14px 16px;border-radius:12px;background:rgba(220,60,60,.06);border:1px solid rgba(220,60,60,.12);color:rgba(180,50,50,.8);font-size:13px;margin-bottom:12px}
-/* HOME */
-.greeting{font-family:'Unbounded',sans-serif;font-size:24px;font-weight:500;color:#1c1916;line-height:1.2;margin-bottom:4px;letter-spacing:-.3px}
-.greeting-sub{color:rgba(28,25,22,.4);font-size:13px;font-weight:400;margin-bottom:20px}
-.streak-row{display:flex;align-items:center;gap:10px;margin-bottom:20px}
-.streak-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;background:linear-gradient(135deg,rgba(200,113,74,.1),rgba(184,92,122,.1));font-size:12px;font-weight:600;color:#b85c7a}
-.insight-card{padding:22px;background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.9);border-radius:18px;margin-bottom:14px;position:relative;overflow:hidden}
-.insight-tag{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(135deg,#c8714a,#b85c7a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px}
-.insight-title{font-family:'Unbounded',sans-serif;font-size:16px;font-weight:500;color:#1c1916;margin-bottom:10px;line-height:1.3}
-.insight-text{color:rgba(28,25,22,.55);font-size:13px;line-height:1.75;margin-bottom:14px;font-weight:400}
-.insight-takeaway{padding:12px 14px;border-left:3px solid;border-image:linear-gradient(135deg,#c8714a,#b85c7a) 1;background:rgba(200,113,74,.04);border-radius:0 10px 10px 0;color:rgba(28,25,22,.65);font-size:14px;line-height:1.6;font-style:italic;font-weight:400;margin-bottom:12px}
-.insight-challenge{background:rgba(0,0,0,.03);border-radius:10px;padding:12px 14px;color:rgba(28,25,22,.5);font-size:12px;line-height:1.65;font-weight:400}
-.quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.quick-card{padding:20px 16px;background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.9);border-radius:16px;cursor:pointer;transition:all .2s;border:none;text-align:left;font-family:inherit}
-.quick-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.06)}
-.quick-card:active{transform:scale(.97)}
-.quick-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,rgba(200,113,74,.12),rgba(184,92,122,.12));display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:16px}
-.quick-title{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:500;color:#1c1916;margin-bottom:4px}
-.quick-desc{color:rgba(28,25,22,.4);font-size:11px;line-height:1.5}
-/* MINDSET / PROGRAMS */
-.section-title{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:500;color:#1c1916;padding:20px 20px 12px;letter-spacing:-.2px}
-.topics-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 20px 16px}
-.topic-card{padding:16px 14px;background:rgba(255,255,255,.65);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-radius:14px;border:1px solid rgba(0,0,0,.04);cursor:pointer;transition:all .2s}
-.topic-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.05);border-color:rgba(200,113,74,.15)}
-.topic-card:active{transform:scale(.97)}
-.topic-emoji{font-size:20px;margin-bottom:10px;display:block}
-.topic-name{color:#1c1916;font-size:13px;font-weight:500;line-height:1.3;margin-bottom:3px}
-.topic-count{color:rgba(28,25,22,.35);font-size:10px;font-weight:400}
-/* LESSON SCREEN */
-#lessonScreen{position:fixed;inset:0;background:linear-gradient(168deg,#e5e8f0,#eae7f0,#ede5ea);z-index:200;display:none;flex-direction:column;max-width:430px;margin:0 auto;animation:tabIn .3s ease forwards}
-#lessonScreen.open{display:flex}
-.lesson-header{padding:52px 20px 16px;display:flex;align-items:center;gap:14px}
-.back-btn{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.65);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(0,0,0,.06);color:rgba(28,25,22,.5);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;font-family:inherit}
-.back-btn:hover{background:rgba(255,255,255,.9);color:#1c1916}
-.lesson-content{flex:1;overflow-y:auto;padding:20px 20px 60px}
-.lesson-tag{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(135deg,#c8714a,#b85c7a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:14px}
-.lesson-title{font-family:'Unbounded',sans-serif;font-size:20px;font-weight:500;color:#1c1916;line-height:1.25;margin-bottom:18px;letter-spacing:-.3px}
-.lesson-body{color:rgba(28,25,22,.6);font-size:14px;line-height:1.85;margin-bottom:22px;font-weight:400}
-.lesson-takeaway{border-left:3px solid;border-image:linear-gradient(135deg,#c8714a,#b85c7a) 1;padding:12px 14px;background:rgba(255,255,255,.5);border-radius:0 12px 12px 0;color:rgba(28,25,22,.65);font-style:italic;font-size:15px;line-height:1.65;margin-bottom:18px}
-.lesson-challenge{background:rgba(255,255,255,.6);border:1px solid rgba(0,0,0,.05);border-radius:14px;padding:16px;color:rgba(28,25,22,.6);font-size:13px;line-height:1.7}
-.lesson-challenge strong{display:block;margin-bottom:6px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(28,25,22,.35);font-weight:600}
-#lessonLoading{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:14px}
-.spinner{width:24px;height:24px;border-radius:50%;border:2px solid rgba(28,25,22,.1);border-top-color:#b85c7a;animation:spin .8s linear infinite}
-#lessonLoading p{color:rgba(28,25,22,.3);font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:500}
-/* TEXT COACH */
-.interest-bar-wrap{margin:10px 0 16px}
-.interest-labels{display:flex;justify-content:space-between;font-size:9px;color:rgba(28,25,22,.3);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase;font-weight:500}
-.interest-bar{height:5px;background:rgba(0,0,0,.06);border-radius:5px;overflow:hidden}
-.interest-fill{height:100%;transition:width .6s ease;background:linear-gradient(135deg,#c8714a,#b85c7a,#5a7a6e);border-radius:5px}
-.reply-card{padding:20px;background:rgba(255,255,255,.8);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-radius:16px;border:1px solid rgba(200,113,74,.1);margin-bottom:10px}
-.reply-style-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.reply-style-label{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(135deg,#c8714a,#b85c7a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.reply-copy{background:none;border:none;cursor:pointer;font-family:inherit;font-size:9px;color:rgba(28,25,22,.25);margin-left:auto;transition:color .2s;letter-spacing:1.5px;text-transform:uppercase;font-weight:500}
-.reply-copy:hover{color:#1c1916}
-.reply-text{color:#1c1916;font-size:18px;line-height:1.45;font-weight:300;margin-bottom:10px;font-style:italic}
-.reply-why{color:rgba(28,25,22,.45);font-size:12px;line-height:1.65}
-.flag-card{padding:14px 18px;border-radius:14px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start}
-.flag-card.green{background:rgba(90,122,110,.06);border:1px solid rgba(90,122,110,.12)}
-.flag-card.red{background:rgba(200,60,60,.05);border:1px solid rgba(200,60,60,.1)}
-/* PROFILE */
-.profile-content{padding:20px}
-.profile-monogram{width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,rgba(200,113,74,.15),rgba(184,92,122,.15));display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:20px;font-weight:500;color:#b85c7a;margin-bottom:16px}
-.profile-name{font-family:'Unbounded',sans-serif;font-size:22px;font-weight:500;color:#1c1916;margin-bottom:4px;letter-spacing:-.3px}
-.profile-plan{color:rgba(28,25,22,.4);font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:500}
-.stats-row{display:flex;gap:8px;margin:20px 0}
-.stat-box{flex:1;background:rgba(255,255,255,.65);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-radius:14px;border:1px solid rgba(0,0,0,.04);padding:16px 10px;text-align:center}
-.stat-num{font-family:'Unbounded',sans-serif;font-size:24px;font-weight:500;color:#1c1916}
-.stat-label{color:rgba(28,25,22,.35);font-size:9px;text-transform:uppercase;letter-spacing:1.5px;margin-top:4px;font-weight:500}
-.settings-section{margin-top:16px}
-.settings-label{color:rgba(28,25,22,.3);font-size:10px;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;font-weight:600}
-.setting-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid rgba(0,0,0,.05)}
-.setting-row-label{color:rgba(28,25,22,.65);font-size:14px;font-weight:400}
-.setting-row-value{color:rgba(28,25,22,.35);font-size:12px}
-.hidden{display:none!important}
-/* USAGE */
-.usage-bar{display:flex;gap:5px;margin-bottom:14px}
-.usage-pip{height:4px;border-radius:3px;flex:1;background:rgba(0,0,0,.06);transition:background .3s}
-.usage-pip.used{background:linear-gradient(135deg,#c8714a,#b85c7a)}
-.usage-hint{font-size:10px;color:rgba(28,25,22,.35);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;font-weight:500}
-/* SPLASH */
-#splash{position:fixed;inset:0;background:linear-gradient(175deg,#1e1c2a,#241824,#1a1c1e);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;max-width:430px;margin:0 auto}
-#splash.fade-out{animation:splashOut .6s ease forwards}
-@keyframes splashOut{from{opacity:1}to{opacity:0;pointer-events:none}}
-.splash-burst{width:64px;height:64px;animation:splashBurst 1.2s ease forwards;opacity:0}
-@keyframes splashBurst{0%{opacity:0;transform:scale(.7)}50%{opacity:1;transform:scale(1.05)}100%{opacity:.9;transform:scale(1)}}
-.splash-word{font-family:'Unbounded',sans-serif;font-size:32px;font-weight:500;background:linear-gradient(135deg,#c8714a,#b85c7a,#5a7a6e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:splashWord .7s ease .5s forwards;opacity:0;letter-spacing:-.5px}
-@keyframes splashWord{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-/* ONBOARDING */
-#onboarding{position:fixed;inset:0;background:linear-gradient(175deg,#1e1c2a,#241824,#1a1c1e);z-index:900;display:flex;flex-direction:column;max-width:430px;margin:0 auto;animation:fadeUp .4s ease}
-#onboarding.gone{display:none}
-.ob-slide{display:none;flex-direction:column;justify-content:space-between;height:100%;padding:64px 28px 48px}
-.ob-slide.active{display:flex}
-.ob-top{flex:1;display:flex;flex-direction:column;justify-content:center}
-.ob-step{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;background:linear-gradient(135deg,#c8714a,#b85c7a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:28px;font-weight:600}
-.ob-title{font-family:'Unbounded',sans-serif;font-size:30px;font-weight:500;color:#fff;line-height:1.15;letter-spacing:-.5px;margin-bottom:16px}
-.ob-sub{color:rgba(255,255,255,.45);font-size:14px;line-height:1.75;font-weight:400;margin-bottom:32px}
-.ob-input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px 18px;color:#fff;font-size:16px;font-weight:400;transition:border-color .2s;margin-bottom:10px}
-.ob-input:focus{border-color:rgba(200,113,74,.5);outline:none}
-.ob-input::placeholder{color:rgba(255,255,255,.25)}
-.ob-options{display:flex;flex-direction:column;gap:10px;margin-bottom:8px}
-.ob-option{padding:16px 18px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.6);font-size:14px;font-family:inherit;cursor:pointer;text-align:left;transition:all .22s;display:flex;align-items:center;gap:14px}
-.ob-option:hover{border-color:rgba(255,255,255,.3);color:#fff}
-.ob-option.sel{border-color:rgba(200,113,74,.6);color:#fff;background:rgba(200,113,74,.08)}
-.ob-option-sym{font-size:18px;width:28px;text-align:center;opacity:.6}
-.ob-option-text{display:flex;flex-direction:column}
-.ob-option-label{font-size:14px;font-weight:500}
-.ob-option-desc{font-size:11px;color:rgba(255,255,255,.3);margin-top:2px}
-.ob-bottom{padding-top:24px}
-.ob-progress{display:flex;gap:6px;margin-bottom:24px}
-.ob-dot{height:3px;border-radius:3px;background:rgba(255,255,255,.1);flex:1;transition:background .3s}
-.ob-dot.done{background:linear-gradient(135deg,#c8714a,#b85c7a)}
-.ob-btn{width:100%;height:52px;border-radius:14px;border:none;background:linear-gradient(135deg,#c8714a,#b85c7a,#5a7a6e);color:#fff;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;letter-spacing:.8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s;box-shadow:0 4px 16px rgba(184,92,122,.25)}
-.ob-btn:disabled{opacity:.3;cursor:default}
-.ob-skip{background:none;border:none;color:rgba(255,255,255,.25);font-size:11px;cursor:pointer;font-family:inherit;letter-spacing:1.5px;text-transform:uppercase;text-align:center;width:100%;margin-top:12px;padding:8px;font-weight:500}
-.ob-skip:hover{color:rgba(255,255,255,.5)}
-/* PAYWALL */
-#paywall{position:fixed;inset:0;background:linear-gradient(175deg,#1e1c2a,#241824,#1a1c1e);z-index:800;display:none;flex-direction:column;max-width:430px;margin:0 auto}
-#paywall.open{display:flex}
-.pw-scroll{flex:1;overflow-y:auto;padding:0 0 24px}
-.pw-hero{padding:52px 28px 32px;text-align:center;border-bottom:1px solid rgba(255,255,255,.06);position:relative}
-.pw-burst{width:48px;height:48px;margin:0 auto 20px;opacity:.9}
-.pw-burst svg{width:100%;height:100%}
-.pw-tag{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;background:linear-gradient(135deg,#c8714a,#b85c7a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:14px;font-weight:600}
-.pw-title{font-family:'Unbounded',sans-serif;font-size:28px;font-weight:500;color:#fff;letter-spacing:-.5px;line-height:1.15;margin-bottom:12px}
-.pw-sub{color:rgba(255,255,255,.4);font-size:14px;line-height:1.65;font-weight:400}
-.pw-features{padding:24px 28px;border-bottom:1px solid rgba(255,255,255,.06)}
-.pw-feat{display:flex;align-items:flex-start;gap:14px;margin-bottom:18px}
-.pw-feat:last-child{margin-bottom:0}
-.pw-feat-sym{font-size:16px;width:24px;flex-shrink:0;margin-top:1px;background:linear-gradient(135deg,#c8714a,#b85c7a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.pw-feat-text{flex:1}
-.pw-feat-title{color:#fff;font-size:14px;font-weight:500;margin-bottom:3px}
-.pw-feat-desc{color:rgba(255,255,255,.35);font-size:12px;line-height:1.55}
-.pw-plans{padding:24px 28px}
-.pw-plan{border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:18px 20px;margin-bottom:10px;cursor:pointer;transition:all .22s;position:relative;background:rgba(255,255,255,.03)}
-.pw-plan:hover{border-color:rgba(255,255,255,.25)}
-.pw-plan.sel{border-color:rgba(200,113,74,.5);background:rgba(200,113,74,.06)}
-.pw-plan-row{display:flex;align-items:center;justify-content:space-between}
-.pw-plan-name{font-size:14px;font-weight:500;color:#fff}
-.pw-plan-price{font-family:'Unbounded',sans-serif;font-size:20px;font-weight:400;color:#fff}
-.pw-plan-sub{font-size:11px;color:rgba(255,255,255,.35);margin-top:4px}
-.pw-badge{position:absolute;top:-10px;right:16px;background:linear-gradient(135deg,#c8714a,#b85c7a);color:#fff;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;border-radius:6px;font-weight:600}
-.pw-cta{padding:0 28px 32px;padding-bottom:calc(32px + env(safe-area-inset-bottom,0))}
-.pw-legal{text-align:center;color:rgba(255,255,255,.2);font-size:10px;line-height:1.6;margin-top:14px;letter-spacing:.3px}
-.pw-close{position:absolute;top:18px;right:20px;background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.4);width:32px;height:32px;border-radius:8px;font-size:18px;cursor:pointer;font-family:inherit;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .2s}
-.pw-close:hover{background:rgba(255,255,255,.15);color:#fff}
+.screen{
+position:absolute;inset:0;
+display:none;flex-direction:column;
+overflow:hidden;
+}
+.screen.active{display:flex}
+
+/* ============ SPLASH ============ */
+#splash{
+background:var(--bg-dark);
+align-items:center;justify-content:center;
+z-index:1000;
+}
+#splash .splash-icon{
+width:64px;height:64px;margin-bottom:18px;
+opacity:0;animation:fadeUp .6s .2s forwards;
+}
+#splash .splash-logo{
+font-family:'Unbounded',sans-serif;font-size:32px;font-weight:700;
+color:#fff;letter-spacing:-0.5px;
+opacity:0;animation:fadeUp .6s .4s forwards;
+}
+
+/* ============ ONBOARDING ============ */
+#onboarding{background:var(--bg-dark);z-index:900;flex-direction:column}
+.ob-slides{flex:1;position:relative;overflow:hidden}
+.ob-slide{
+position:absolute;inset:0;
+display:flex;flex-direction:column;
+padding:60px 28px 0;
+opacity:0;transform:translateX(60px);
+transition:all .45s cubic-bezier(.4,0,.2,1);
+pointer-events:none;
+overflow-y:auto;
+}
+.ob-slide.active{opacity:1;transform:translateX(0);pointer-events:auto}
+.ob-slide.left{opacity:0;transform:translateX(-60px)}
+
+.ob-slide h1{
+font-size:28px;color:#fff;line-height:1.2;margin-bottom:8px;
+}
+.ob-slide .tagline{
+font-size:15px;color:rgba(255,255,255,0.55);line-height:1.5;margin-bottom:36px;
+}
+
+.ob-input{
+width:100%;padding:14px 16px;
+background:rgba(255,255,255,0.07);
+border:1px solid rgba(255,255,255,0.1);
+border-radius:var(--radius-sm);
+color:#fff;font-size:16px;font-family:'DM Sans',sans-serif;
+outline:none;margin-bottom:14px;
+transition:border-color .2s;
+}
+.ob-input:focus{border-color:rgba(200,113,74,0.6)}
+.ob-input::placeholder{color:rgba(255,255,255,0.3)}
+
+.goal-options{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.goal-opt{
+padding:16px 18px;
+background:rgba(255,255,255,0.06);
+border:1.5px solid rgba(255,255,255,0.1);
+border-radius:var(--radius-sm);
+color:#fff;font-size:15px;cursor:pointer;
+transition:all .2s;
+text-align:left;font-family:'DM Sans',sans-serif;
+}
+.goal-opt.selected{
+border-color:#c8714a;
+background:rgba(200,113,74,0.12);
+}
+
+.ob-dots{
+display:flex;justify-content:center;gap:8px;
+padding:18px 0 calc(28px + var(--safe-b));
+}
+.ob-dot{
+width:8px;height:8px;border-radius:50%;
+background:rgba(255,255,255,0.18);
+transition:all .3s;
+}
+.ob-dot.active{background:#fff;width:24px;border-radius:4px}
+
+.btn-brand{
+width:100%;padding:16px;border:none;border-radius:var(--radius-sm);
+background:var(--brand);
+color:#fff;font-size:16px;font-weight:600;
+font-family:'DM Sans',sans-serif;
+cursor:pointer;margin-top:18px;
+transition:opacity .2s, transform .1s;
+}
+.btn-brand:active{transform:scale(0.97);opacity:0.9}
+
+/* ============ MAIN APP ============ */
+#main{background:transparent;z-index:100}
+.tab-area{
+flex:1;overflow:hidden;position:relative;
+padding-top:calc(12px + var(--safe-t));
+}
+.tab-panel{
+position:absolute;inset:0;
+padding:calc(12px + var(--safe-t)) 20px 0;
+overflow-y:auto;
+display:none;flex-direction:column;
+padding-bottom:calc(var(--nav-h) + var(--safe-b) + 24px);
+}
+.tab-panel.active{display:flex;animation:tabIn .32s ease}
+
+/* BOTTOM NAV */
+.bottom-nav{
+position:absolute;bottom:0;left:0;right:0;
+height:calc(var(--nav-h) + var(--safe-b));
+padding-bottom:var(--safe-b);
+display:flex;align-items:center;justify-content:space-around;
+background:rgba(255,255,255,0.82);
+backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+border-top:1px solid rgba(0,0,0,0.05);
+z-index:200;
+}
+.nav-btn{
+display:flex;flex-direction:column;align-items:center;gap:3px;
+background:none;border:none;cursor:pointer;
+padding:6px 14px;
+color:var(--text-dim);
+transition:color .2s;
+font-family:'DM Sans',sans-serif;
+}
+.nav-btn.active{color:#b85c7a}
+.nav-btn svg{width:24px;height:24px;transition:all .2s}
+.nav-btn span{font-size:10px;font-weight:600;letter-spacing:0.3px}
+
+/* CARDS */
+.card{
+background:var(--card);
+backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+border:1px solid var(--card-border);
+border-radius:var(--radius);
+padding:18px;
+margin-bottom:14px;
+}
+.card-sm{padding:14px;border-radius:var(--radius-sm)}
+
+/* ============ HOME TAB ============ */
+.greeting{font-size:26px;color:var(--text);line-height:1.2;margin-bottom:4px}
+.greeting-sub{font-size:14px;color:var(--text-dim);margin-bottom:22px}
+.streak-badge{
+display:inline-flex;align-items:center;gap:6px;
+padding:6px 14px;border-radius:20px;
+background:rgba(200,113,74,0.1);
+color:#c8714a;font-size:13px;font-weight:600;
+margin-bottom:20px;
+}
+.insight-card{margin-bottom:16px}
+.insight-card .insight-label{
+font-size:11px;font-weight:600;letter-spacing:1px;
+text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;
+}
+.insight-card .insight-text{font-size:15px;line-height:1.55;color:var(--text)}
+.quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.quick-card{
+text-align:left;cursor:pointer;
+border:none;font-family:'DM Sans',sans-serif;
+}
+.quick-card .qc-icon{font-size:22px;margin-bottom:8px}
+.quick-card h4{font-size:14px;margin-bottom:2px;color:var(--text)}
+.quick-card p{font-size:12px;color:var(--text-dim)}
+
+/* ============ COACH TAB ============ */
+.tab-header{
+font-family:'Unbounded',sans-serif;font-size:24px;font-weight:700;
+color:var(--text);margin-bottom:16px;
+}
+.usage-bar-wrap{
+display:flex;align-items:center;gap:10px;
+margin-bottom:18px;
+}
+.usage-bar{
+flex:1;height:6px;border-radius:3px;
+background:rgba(0,0,0,0.06);overflow:hidden;
+}
+.usage-bar-fill{
+height:100%;border-radius:3px;
+background:var(--brand);
+transition:width .4s;
+}
+.usage-label{font-size:12px;color:var(--text-dim);white-space:nowrap}
+
+.input-area{position:relative;margin-bottom:12px}
+.input-area textarea{
+width:100%;min-height:100px;
+padding:14px 16px;
+background:var(--card);
+backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+border:1px solid var(--card-border);
+border-radius:var(--radius-sm);
+font-size:15px;font-family:'DM Sans',sans-serif;
+color:var(--text);resize:none;outline:none;
+transition:border-color .2s;
+line-height:1.5;
+}
+.input-area textarea:focus{border-color:rgba(184,92,122,0.4)}
+.input-area textarea::placeholder{color:var(--text-dim)}
+.char-count{
+position:absolute;bottom:10px;right:12px;
+font-size:11px;color:var(--text-dim);
+}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.chip{
+padding:8px 14px;border-radius:20px;
+background:rgba(0,0,0,0.04);
+border:1px solid rgba(0,0,0,0.06);
+font-size:13px;color:var(--text-dim);
+cursor:pointer;font-family:'DM Sans',sans-serif;
+transition:all .2s;white-space:nowrap;
+}
+.chip:active{background:rgba(0,0,0,0.08)}
+
+/* Results */
+.results{animation:fadeUp .4s ease}
+.result-section{margin-bottom:10px}
+.result-label{
+font-size:11px;font-weight:600;letter-spacing:1px;
+text-transform:uppercase;color:var(--text-dim);
+margin-bottom:8px;
+}
+.opener-card{position:relative}
+.opener-card .type-badge{
+display:inline-block;padding:3px 10px;border-radius:12px;
+font-size:11px;font-weight:600;
+background:var(--brand);color:#fff;
+margin-bottom:8px;
+}
+.opener-card .opener-text{font-size:16px;font-weight:500;color:var(--text);margin-bottom:4px}
+.opener-card .followup{font-size:13px;color:var(--text-dim);margin-bottom:6px}
+.opener-card .why{font-size:12px;color:var(--text-dim);font-style:italic}
+.copy-btn{
+position:absolute;top:14px;right:14px;
+width:32px;height:32px;border-radius:8px;
+background:rgba(0,0,0,0.04);
+border:none;cursor:pointer;
+display:flex;align-items:center;justify-content:center;
+transition:all .2s;
+}
+.copy-btn:active{background:rgba(0,0,0,0.1)}
+.copy-btn svg{width:16px;height:16px;color:var(--text-dim)}
+.tip-card{display:flex;gap:10px;align-items:flex-start}
+.tip-card .tip-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.tip-card .tip-text{font-size:14px;color:var(--text);line-height:1.45}
+.btn-reset{
+width:100%;padding:14px;border:none;border-radius:var(--radius-sm);
+background:rgba(0,0,0,0.04);
+color:var(--text);font-size:14px;font-weight:500;
+font-family:'DM Sans',sans-serif;
+cursor:pointer;margin-top:8px;
+transition:background .2s;
+}
+.btn-reset:active{background:rgba(0,0,0,0.08)}
+
+/* ============ TEXTS TAB ============ */
+.interest-bar-wrap{margin:12px 0 8px}
+.interest-bar{
+height:8px;border-radius:4px;
+background:rgba(0,0,0,0.06);overflow:hidden;
+}
+.interest-fill{
+height:100%;border-radius:4px;
+transition:width .6s;
+}
+.interest-label{
+display:flex;justify-content:space-between;
+font-size:12px;color:var(--text-dim);margin-top:4px;
+}
+.flag-card{display:flex;gap:10px;align-items:flex-start}
+.flag-card .flag-icon{font-size:18px;flex-shrink:0}
+.flag-card .flag-text{font-size:14px;color:var(--text);line-height:1.45}
+
+/* ============ YOU TAB ============ */
+.profile-header{
+display:flex;flex-direction:column;align-items:center;
+padding:12px 0 20px;
+}
+.monogram{
+width:64px;height:64px;border-radius:50%;
+background:var(--brand);
+display:flex;align-items:center;justify-content:center;
+font-family:'Unbounded',sans-serif;font-size:22px;
+color:#fff;font-weight:600;margin-bottom:10px;
+}
+.profile-name{font-size:18px;font-weight:600;color:var(--text)}
+.profile-plan{
+font-size:12px;color:var(--text-dim);
+margin-top:2px;
+}
+.stats-row{
+display:grid;grid-template-columns:repeat(3,1fr);
+gap:10px;margin-bottom:24px;
+}
+.stat-box{
+text-align:center;padding:14px 8px;
+}
+.stat-num{font-family:'Unbounded',sans-serif;font-size:20px;font-weight:600;color:var(--text)}
+.stat-label{font-size:11px;color:var(--text-dim);margin-top:2px}
+
+.section-title{
+font-size:13px;font-weight:600;letter-spacing:0.8px;
+text-transform:uppercase;color:var(--text-dim);
+margin-bottom:12px;
+}
+.programs-grid{
+display:grid;grid-template-columns:repeat(2,1fr);
+gap:10px;margin-bottom:24px;
+}
+.program-card{
+padding:14px;cursor:pointer;text-align:left;
+border:none;font-family:'DM Sans',sans-serif;
+transition:transform .15s;
+}
+.program-card:active{transform:scale(0.97)}
+.program-card .prog-icon{font-size:20px;margin-bottom:6px}
+.program-card h4{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.program-card p{font-size:11px;color:var(--text-dim)}
+.program-card .prog-progress{
+height:3px;border-radius:2px;
+background:rgba(0,0,0,0.06);
+margin-top:8px;overflow:hidden;
+}
+.program-card .prog-progress-fill{
+height:100%;border-radius:2px;
+background:var(--brand);
+}
+
+.settings-list{display:flex;flex-direction:column;gap:1px}
+.setting-row{
+display:flex;justify-content:space-between;align-items:center;
+padding:15px 18px;
+cursor:pointer;
+}
+.setting-row .sr-left{font-size:14px;color:var(--text)}
+.setting-row .sr-right{font-size:13px;color:var(--text-dim)}
+
+/* ============ LESSON OVERLAY ============ */
+#lessonOverlay{
+position:absolute;inset:0;z-index:500;
+background:var(--bg);
+display:none;flex-direction:column;
+}
+#lessonOverlay.active{display:flex}
+.lesson-top{
+display:flex;align-items:center;gap:12px;
+padding:calc(14px + var(--safe-t)) 20px 14px;
+}
+.lesson-back{
+width:36px;height:36px;border-radius:10px;
+background:var(--card);
+backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+border:1px solid var(--card-border);
+display:flex;align-items:center;justify-content:center;
+cursor:pointer;
+}
+.lesson-back svg{width:18px;height:18px;color:var(--text)}
+.lesson-topic{font-size:16px;font-weight:600;color:var(--text)}
+.lesson-session{font-size:12px;color:var(--text-dim)}
+.lesson-body{
+flex:1;overflow-y:auto;padding:20px;
+}
+.lesson-body .lesson-title{font-size:22px;color:var(--text);margin-bottom:16px;line-height:1.25}
+.lesson-body .lesson-text{font-size:15px;line-height:1.65;color:var(--text);margin-bottom:20px}
+.lesson-body .lesson-takeaway{
+padding:16px;border-radius:var(--radius-sm);
+background:rgba(200,113,74,0.08);
+margin-bottom:16px;
+}
+.lesson-body .lesson-takeaway .lt-label{
+font-size:11px;font-weight:600;letter-spacing:1px;
+text-transform:uppercase;color:#c8714a;margin-bottom:6px;
+}
+.lesson-body .lesson-takeaway .lt-text{font-size:14px;color:var(--text);line-height:1.5}
+.lesson-body .lesson-challenge{
+padding:16px;border-radius:var(--radius-sm);
+background:rgba(90,122,110,0.08);
+}
+.lesson-body .lesson-challenge .lc-label{
+font-size:11px;font-weight:600;letter-spacing:1px;
+text-transform:uppercase;color:#5a7a6e;margin-bottom:6px;
+}
+.lesson-body .lesson-challenge .lc-text{font-size:14px;color:var(--text);line-height:1.5}
+.lesson-bottom{
+padding:16px 20px calc(16px + var(--safe-b));
+}
+
+/* ============ PAYWALL ============ */
+#paywall{
+position:absolute;inset:0;z-index:600;
+background:var(--bg-dark);
+display:none;flex-direction:column;
+overflow-y:auto;
+}
+#paywall.active{display:flex}
+.pw-close{
+position:absolute;top:calc(14px + var(--safe-t));right:18px;
+width:36px;height:36px;border-radius:50%;
+background:rgba(255,255,255,0.08);
+border:none;cursor:pointer;
+display:flex;align-items:center;justify-content:center;
+z-index:10;
+}
+.pw-close svg{width:18px;height:18px;color:rgba(255,255,255,0.6)}
+.pw-content{
+padding:calc(60px + var(--safe-t)) 28px calc(28px + var(--safe-b));
+display:flex;flex-direction:column;align-items:center;
+}
+.pw-logo{
+font-family:'Unbounded',sans-serif;font-size:28px;font-weight:700;
+background:var(--brand);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+background-clip:text;
+margin-bottom:6px;
+}
+.pw-subtitle{
+font-size:15px;color:rgba(255,255,255,0.5);margin-bottom:36px;
+}
+.pw-features{
+width:100%;display:flex;flex-direction:column;gap:16px;
+margin-bottom:36px;
+}
+.pw-feat{display:flex;align-items:center;gap:12px}
+.pw-feat .pf-icon{
+width:36px;height:36px;border-radius:10px;
+background:rgba(255,255,255,0.06);
+display:flex;align-items:center;justify-content:center;
+font-size:16px;flex-shrink:0;
+}
+.pw-feat .pf-text{color:#fff;font-size:14px;font-weight:500}
+.pw-plans{
+width:100%;display:flex;flex-direction:column;gap:10px;
+margin-bottom:24px;
+}
+.pw-plan{
+padding:18px;border-radius:var(--radius);
+border:1.5px solid rgba(255,255,255,0.1);
+background:rgba(255,255,255,0.04);
+cursor:pointer;position:relative;
+transition:all .2s;
+}
+.pw-plan.selected{border-color:#c8714a;background:rgba(200,113,74,0.08)}
+.pw-plan .plan-name{font-size:15px;font-weight:600;color:#fff}
+.pw-plan .plan-price{font-size:13px;color:rgba(255,255,255,0.5);margin-top:2px}
+.pw-plan .plan-badge{
+position:absolute;top:-10px;right:14px;
+padding:3px 10px;border-radius:8px;
+background:var(--brand);
+font-size:10px;font-weight:700;color:#fff;
+letter-spacing:0.5px;text-transform:uppercase;
+}
+.btn-pro{
+width:100%;padding:16px;border:none;border-radius:var(--radius-sm);
+background:var(--brand);
+color:#fff;font-size:16px;font-weight:600;
+font-family:'DM Sans',sans-serif;
+cursor:pointer;margin-bottom:14px;
+transition:opacity .2s, transform .1s;
+}
+.btn-pro:active{transform:scale(0.97);opacity:0.9}
+.pw-legal{
+font-size:11px;color:rgba(255,255,255,0.3);
+text-align:center;line-height:1.5;
+}
+
+/* ============ SKELETON ============ */
+.skeleton{
+border-radius:6px;
+background:linear-gradient(90deg,rgba(0,0,0,0.04) 25%,rgba(0,0,0,0.08) 50%,rgba(0,0,0,0.04) 75%);
+background-size:200% 100%;
+animation:shimmer 1.4s infinite;
+}
+.skel-line{height:14px;margin-bottom:10px;border-radius:6px}
+.skel-line.w60{width:60%}
+.skel-line.w80{width:80%}
+.skel-line.w40{width:40%}
+.skel-block{height:80px;border-radius:var(--radius-sm);margin-bottom:12px}
+
+/* ============ ERROR ============ */
+.error-state{
+padding:20px;border-radius:var(--radius-sm);
+background:rgba(220,60,60,0.06);
+text-align:center;
+}
+.error-state p{font-size:14px;color:#c44;margin-bottom:12px}
+.error-state button{
+padding:10px 20px;border:1px solid rgba(220,60,60,0.2);
+border-radius:8px;background:none;
+color:#c44;font-size:13px;font-family:'DM Sans',sans-serif;
+cursor:pointer;
+}
+
+/* ============ ANIMATIONS ============ */
+@keyframes fadeUp{
+from{opacity:0;transform:translateY(16px)}
+to{opacity:1;transform:translateY(0)}
+}
+@keyframes tabIn{
+from{opacity:0;transform:translateY(10px)}
+to{opacity:1;transform:translateY(0)}
+}
+@keyframes shimmer{
+0%{background-position:200% 0}
+100%{background-position:-200% 0}
+}
+@keyframes spin{
+to{transform:rotate(360deg)}
+}
+@keyframes fadeIn{
+from{opacity:0}to{opacity:1}
+}
+.spinner{
+width:28px;height:28px;border-radius:50%;
+border:3px solid rgba(0,0,0,0.08);
+border-top-color:#b85c7a;
+animation:spin .7s linear infinite;
+margin:40px auto;
+}
 </style>
 </head>
 <body>
-<!-- SVG gradient defs for nav icons -->
-<svg style="position:absolute;width:0;height:0"><defs><linearGradient id="navGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#c8714a"/><stop offset="50%" stop-color="#b85c7a"/><stop offset="100%" stop-color="#5a7a6e"/></linearGradient></defs></svg>
 <div id="app">
-  <!-- SPLASH -->
-  <div id="splash">
-    <div class="splash-burst"><svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="50" y1="50" x2="50.0" y2="4.0" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="67.6" y2="7.5" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="82.5" y2="17.5" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="92.5" y2="32.4" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="96.0" y2="50.0" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="92.5" y2="67.6" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="82.5" y2="82.5" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="67.6" y2="92.5" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="50.0" y2="96.0" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="32.4" y2="92.5" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="17.5" y2="82.5" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="7.5" y2="67.6" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="4.0" y2="50.0" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="7.5" y2="32.4" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="17.5" y2="17.5" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="32.4" y2="7.5" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><circle cx="50" cy="50" r="2" fill="url(#navGrad)"/></svg></div>
-    <div class="splash-word">Approach.</div>
-  </div>
 
-  <!-- ONBOARDING -->
-  <div id="onboarding">
-    <div class="ob-slide active" id="ob1">
-      <div class="ob-top">
-        <div class="ob-step">01 — Welcome</div>
-        <div class="ob-title">The confidence<br>you've been<br>waiting for.</div>
-        <div class="ob-sub">Approach is your personal coach for real-life situations — what to say, when to say it, and how to carry yourself.</div>
-      </div>
-      <div class="ob-bottom">
-        <div class="ob-progress"><div class="ob-dot done"></div><div class="ob-dot"></div><div class="ob-dot"></div></div>
-        <button class="ob-btn" onclick="obNext(1)">Get Started →</button>
-      </div>
-    </div>
-    <div class="ob-slide" id="ob2">
-      <div class="ob-top">
-        <div class="ob-step">02 — Personalize</div>
-        <div class="ob-title">What should<br>we call you?</div>
-        <div class="ob-sub">Approach adapts its coaching to you personally.</div>
-        <input class="ob-input" id="obName" type="text" placeholder="Your first name..." maxlength="30" oninput="obCheckName()"/>
-        <input class="ob-input" id="obAge" type="number" placeholder="Your age..." min="16" max="80" oninput="obCheckName()"/>
-        <input class="ob-input" id="obEmail" type="email" placeholder="Your email (optional)..." maxlength="100"/>
-      </div>
-      <div class="ob-bottom">
-        <div class="ob-progress"><div class="ob-dot done"></div><div class="ob-dot done"></div><div class="ob-dot"></div></div>
-        <button class="ob-btn" id="obNameBtn" onclick="obNext(2)" disabled>Continue →</button>
-        <button class="ob-skip" onclick="obSkipName()">Skip</button>
-      </div>
-    </div>
-    <div class="ob-slide" id="ob3">
-      <div class="ob-top">
-        <div class="ob-step">03 — Your Goal</div>
-        <div class="ob-title">What do you<br>want to<br>improve?</div>
-        <div class="ob-options">
-          <button class="ob-option" onclick="obSelect(this,'approaching')">
-            <span class="ob-option-sym">◈</span>
-            <span class="ob-option-text"><span class="ob-option-label">Approaching women</span><span class="ob-option-desc">What to say in the moment</span></span>
-          </button>
-          <button class="ob-option" onclick="obSelect(this,'texting')">
-            <span class="ob-option-sym">∿</span>
-            <span class="ob-option-text"><span class="ob-option-label">Text & conversation</span><span class="ob-option-desc">Keep her interested, move things forward</span></span>
-          </button>
-          <button class="ob-option" onclick="obSelect(this,'both')">
-            <span class="ob-option-sym">✦</span>
-            <span class="ob-option-text"><span class="ob-option-label">Both</span><span class="ob-option-desc">Full confidence from first word to first date</span></span>
-          </button>
-        </div>
-      </div>
-      <div class="ob-bottom">
-        <div class="ob-progress"><div class="ob-dot done"></div><div class="ob-dot done"></div><div class="ob-dot done"></div></div>
-        <button class="ob-btn" id="obGoalBtn" onclick="obFinish()" disabled>Let's Go →</button>
-      </div>
-    </div>
-  </div>
-  <!-- PAYWALL -->
-  <div id="paywall">
-    <div class="pw-scroll">
-      <div class="pw-hero">
-        <button class="pw-close" onclick="closePaywall()">×</button>
-        <div class="pw-burst"><svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="50" y1="50" x2="50.0" y2="4.0" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="67.6" y2="7.5" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="82.5" y2="17.5" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="92.5" y2="32.4" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="96.0" y2="50.0" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="92.5" y2="67.6" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="82.5" y2="82.5" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="67.6" y2="92.5" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="50.0" y2="96.0" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="32.4" y2="92.5" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="17.5" y2="82.5" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="7.5" y2="67.6" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="4.0" y2="50.0" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="7.5" y2="32.4" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="17.5" y2="17.5" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><line x1="50" y1="50" x2="32.4" y2="7.5" stroke="url(#navGrad)" stroke-width="1.2" opacity="0.7"/><circle cx="50" cy="50" r="2" fill="url(#navGrad)"/></svg></div>
-        <div class="pw-tag">Approach Pro</div>
-        <div class="pw-title">Unlock your<br>full potential.</div>
-        <div class="pw-sub">You've seen what Approach can do.<br>Go unlimited.</div>
-      </div>
-      <div class="pw-features">
-        <div class="pw-feat"><div class="pw-feat-sym">◈</div><div class="pw-feat-text"><div class="pw-feat-title">Unlimited Approaches</div><div class="pw-feat-desc">Get coached on every situation, every time. No limits.</div></div></div>
-        <div class="pw-feat"><div class="pw-feat-sym">∿</div><div class="pw-feat-text"><div class="pw-feat-title">Unlimited Text Analysis</div><div class="pw-feat-desc">Paste any conversation, get an honest read and real replies.</div></div></div>
-        <div class="pw-feat"><div class="pw-feat-sym">△</div><div class="pw-feat-text"><div class="pw-feat-title">Full Mindset Program</div><div class="pw-feat-desc">All 10 programs, 50 sessions of deep confidence work.</div></div></div>
-        <div class="pw-feat"><div class="pw-feat-sym">◉</div><div class="pw-feat-text"><div class="pw-feat-title">Approach Remembers You</div><div class="pw-feat-desc">Personalized coaching that gets better over time.</div></div></div>
-      </div>
-      <div class="pw-plans">
-        <div class="pw-plan sel" id="plan-yearly" onclick="selectPlan('yearly')">
-          <div class="pw-badge">Best Value</div>
-          <div class="pw-plan-row"><span class="pw-plan-name">Annual</span><span class="pw-plan-price">$89.99</span></div>
-          <div class="pw-plan-sub">$7.50 / month · billed once a year</div>
-        </div>
-        <div class="pw-plan" id="plan-monthly" onclick="selectPlan('monthly')">
-          <div class="pw-plan-row"><span class="pw-plan-name">Monthly</span><span class="pw-plan-price">$14.99</span></div>
-          <div class="pw-plan-sub">per month · cancel anytime</div>
-        </div>
-      </div>
-    </div>
-    <div class="pw-cta">
-      <button class="ob-btn" onclick="completePurchase()">Start Pro Access →</button>
-      <div class="pw-legal">Cancel anytime · Renews automatically · Secure payment</div>
-    </div>
-  </div>
-  <div id="tabContent">
-    <!-- HOME TAB -->
-    <div id="tab-home" class="screen active">
-      <div class="screen-header">
-        <div class="header-title">Approach.</div>
-        <div class="header-sub">Your confidence coach</div>
-      </div>
-      <div class="pad">
-        <div class="greeting" id="homeGreeting">Good morning.</div>
-        <div class="greeting-sub" id="homeSub">Here's your daily boost.</div>
-        <div class="streak-row">
-          <div class="streak-badge" id="streakBadge">🔥 1 day streak</div>
-        </div>
-        <div class="insight-card" id="insightCard">
-          <div class="insight-tag">Today's Insight</div>
-          <div style="display:flex;align-items:center;gap:10px;padding:12px 0">
-            <div class="spinner"></div>
-            <span style="color:rgba(28,25,22,.35);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500">Loading...</span>
-          </div>
-        </div>
-        <div class="quick-actions">
-          <button class="quick-card" onclick="switchTab('coach')">
-            <div class="quick-icon">◈</div>
-            <div class="quick-title">Get Coached</div>
-            <div class="quick-desc">Real-time approach advice</div>
-          </button>
-          <button class="quick-card" onclick="switchTab('texts')">
-            <div class="quick-icon">∿</div>
-            <div class="quick-title">Analyze Texts</div>
-            <div class="quick-desc">Read the conversation</div>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- COACH TAB -->
-    <div id="tab-coach" class="screen">
-      <div class="screen-header">
-        <div class="header-title">Coach.</div>
-        <div class="header-sub">Describe the situation</div>
-      </div>
-      <div class="pad">
-        <div class="usage-bar" id="coachUsageBar"><div class="usage-pip used"></div><div class="usage-pip used"></div><div class="usage-pip"></div></div>
-        <div class="usage-hint" id="coachUsageHint">2 of 2 free uses remaining</div>
-        <div class="input-wrap" id="coachInputCard">
-          <textarea id="coachInput" rows="4" maxlength="400"
-            placeholder="She's at the coffee shop alone, no headphones, we locked eyes twice..."
-            oninput="onCoachInput()" onkeydown="if(event.metaKey&&event.key==='Enter')submitCoach()"></textarea>
-          <div class="input-footer">
-            <div class="char-hint" id="coachHint">describe what you see</div>
-            <button class="clear-btn hidden" id="coachClearBtn" onclick="clearCoach()">Clear</button>
-          </div>
-        </div>
-        <button class="btn-primary" id="coachSubmitBtn" onclick="submitCoach()" disabled>Get My Move →</button>
-        <div class="error-box hidden" id="coachError"></div>
-        <div id="coachSkeletons" class="hidden">
-          <div class="skel"><div class="skel-line" style="height:8px;width:25%;margin-bottom:16px"></div><div class="skel-line" style="height:14px;width:90%"></div><div class="skel-line" style="height:14px;width:70%"></div></div>
-          <div class="skel" style="animation-delay:.15s"><div class="skel-line" style="height:8px;width:20%;margin-bottom:16px"></div><div class="skel-line" style="height:16px;width:95%"></div><div class="skel-line" style="height:14px;width:60%"></div></div>
-          <div class="skel" style="animation-delay:.3s"><div class="skel-line" style="height:8px;width:18%;margin-bottom:16px"></div><div class="skel-line" style="height:16px;width:85%"></div><div class="skel-line" style="height:14px;width:55%"></div></div>
-        </div>
-        <div id="coachResults" class="hidden"></div>
-        <div id="coachExamples">
-          <div class="examples-label">Try a scenario</div>
-          <button class="example-chip" onclick="useCoachExample(this)">Coffee shop. Alone, laptop, no headphones. Locked eyes once.</button>
-          <button class="example-chip" onclick="useCoachExample(this)">Gym. Near me on the mat, 20 mins. Eye contact a few times.</button>
-          <button class="example-chip" onclick="useCoachExample(this)">Friend's party. She laughed at something I said from across the room.</button>
-          <button class="example-chip" onclick="useCoachExample(this)">Bar. Sitting alone, scrolling her phone, waiting for someone.</button>
-          <button class="example-chip" onclick="useCoachExample(this)">Bookstore. Same section 10 mins. Smiled at each other twice.</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- TEXTS TAB -->
-    <div id="tab-texts" class="screen">
-      <div class="screen-header">
-        <div class="header-title">Texts.</div>
-        <div class="header-sub">Paste the conversation</div>
-      </div>
-      <div class="pad">
-        <div style="height:8px"></div>
-        <div class="input-wrap" id="textInputCard">
-          <textarea id="textInput" rows="5" maxlength="1000"
-            placeholder="Label each line Me: or Her:&#10;&#10;Me: hey great meeting you&#10;Her: haha yeah was fun!&#10;Me: we should grab drinks..."
-            oninput="onTextInput()" onkeydown="if(event.metaKey&&event.key==='Enter')submitText()"></textarea>
-          <div class="input-footer">
-            <div class="char-hint" id="textHint">paste your chat</div>
-            <button class="clear-btn hidden" id="textClearBtn" onclick="clearText()">Clear</button>
-          </div>
-        </div>
-        <div class="input-wrap" style="margin-top:-2px">
-          <textarea id="textContext" rows="2" maxlength="200" placeholder="Context? How you met, how long you've been talking..."></textarea>
-          <div class="input-footer"><div class="char-hint">optional context</div></div>
-        </div>
-        <button class="btn-primary" id="textSubmitBtn" onclick="submitText()" disabled>Analyze →</button>
-        <div class="error-box hidden" id="textError"></div>
-        <div id="textSkeletons" class="hidden">
-          <div class="skel"><div class="skel-line" style="height:8px;width:18%;margin-bottom:16px"></div><div class="skel-line" style="height:14px;width:92%"></div><div class="skel-line" style="height:14px;width:78%"></div></div>
-          <div class="skel" style="animation-delay:.15s"><div class="skel-line" style="height:8px;width:14%;margin-bottom:16px"></div><div class="skel-line" style="height:16px;width:88%"></div></div>
-          <div class="skel" style="animation-delay:.3s"><div class="skel-line" style="height:8px;width:14%;margin-bottom:16px"></div><div class="skel-line" style="height:16px;width:80%"></div></div>
-        </div>
-        <div id="textResults" class="hidden"></div>
-        <div id="textExamples">
-          <div class="examples-label">Examples</div>
-          <button class="example-chip" onclick="useTextExample(1)">Hinge match, 2 days of banter. She's gone quiet.</button>
-          <button class="example-chip" onclick="useTextExample(2)">Met at a party, got her number. Warm but short replies.</button>
-        </div>
-      </div>
-    </div>
-    <!-- YOU TAB -->
-    <div id="tab-you" class="screen">
-      <div class="screen-header">
-        <div class="header-title">You.</div>
-        <div class="header-sub">Your progress</div>
-      </div>
-      <div class="profile-content">
-        <div class="profile-monogram" id="profileMonogram">?</div>
-        <div class="profile-name" id="profileName">—</div>
-        <div class="profile-plan">Free Plan</div>
-        <div class="stats-row">
-          <div class="stat-box"><div class="stat-num" id="statApproaches">0</div><div class="stat-label">Coached</div></div>
-          <div class="stat-box"><div class="stat-num" id="statTexts">0</div><div class="stat-label">Texts</div></div>
-          <div class="stat-box"><div class="stat-num" id="statLessons">0</div><div class="stat-label">Sessions</div></div>
-        </div>
-        <div class="section-title" style="padding:16px 0 12px">Programs</div>
-        <div class="topics-grid" style="padding:0 0 16px">
-          <div class="topic-card" onclick="openLesson('Body Language',1)"><div class="topic-emoji">◈</div><div class="topic-name">Body Language</div><div class="topic-count">5 sessions</div></div>
-          <div class="topic-card" onclick="openLesson('Handling Rejection',1)"><div class="topic-emoji">◇</div><div class="topic-name">Handling Rejection</div><div class="topic-count">5 sessions</div></div>
-          <div class="topic-card" onclick="openLesson('Eye Contact',1)"><div class="topic-emoji">◉</div><div class="topic-name">Eye Contact</div><div class="topic-count">5 sessions</div></div>
-          <div class="topic-card" onclick="openLesson('Voice & Tone',1)"><div class="topic-emoji">◎</div><div class="topic-name">Voice & Tone</div><div class="topic-count">5 sessions</div></div>
-          <div class="topic-card" onclick="openLesson('Stop Overthinking',1)"><div class="topic-emoji">⊹</div><div class="topic-name">Stop Overthinking</div><div class="topic-count">5 sessions</div></div>
-          <div class="topic-card" onclick="openLesson('Building Presence',1)"><div class="topic-emoji">△</div><div class="topic-name">Building Presence</div><div class="topic-count">5 sessions</div></div>
-          <div class="topic-card" onclick="openLesson('Sexual Confidence',1)"><div class="topic-emoji">✦</div><div class="topic-name">Sexual Confidence</div><div class="topic-count">5 sessions</div></div>
-          <div class="topic-card" onclick="openLesson('Ask Her Out',1)"><div class="topic-emoji">→</div><div class="topic-name">Ask Her Out</div><div class="topic-count">5 sessions</div></div>
-          <div class="topic-card" onclick="openLesson('Conversation Flow',1)"><div class="topic-emoji">∿</div><div class="topic-name">Conversation Flow</div><div class="topic-count">5 sessions</div></div>
-          <div class="topic-card" onclick="openLesson('Less Available',1)"><div class="topic-emoji">⊘</div><div class="topic-name">Less Available</div><div class="topic-count">5 sessions</div></div>
-        </div>
-        <div class="settings-section">
-          <div class="settings-label">Settings</div>
-          <div class="setting-row" style="cursor:pointer" onclick="openPaywall()"><span class="setting-row-label">Plan</span><span class="setting-row-value" id="profilePlanRow" style="background:linear-gradient(135deg,#c8714a,#b85c7a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:600">Upgrade →</span></div>
-          <div class="setting-row"><span class="setting-row-label">Reminder</span><span class="setting-row-value">Daily · 9AM</span></div>
-          <div class="setting-row"><span class="setting-row-label">Version</span><span class="setting-row-value">1.0.0</span></div>
-          <div class="setting-row" style="border:none"><span class="setting-row-label">Privacy Policy</span><span class="setting-row-value">→</span></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- BOTTOM NAV -->
-  <div id="bottomNav">
-    <button class="nav-tab active" id="nav-home" onclick="switchTab('home')">
-      <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
-      <div class="nav-lbl">Home</div>
-    </button>
-    <button class="nav-tab" id="nav-coach" onclick="switchTab('coach')">
-      <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-      <div class="nav-lbl">Coach</div>
-    </button>
-    <button class="nav-tab" id="nav-texts" onclick="switchTab('texts')">
-      <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
-      <div class="nav-lbl">Texts</div>
-    </button>
-    <button class="nav-tab" id="nav-you" onclick="switchTab('you')">
-      <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-      <div class="nav-lbl">You</div>
-    </button>
-  </div>
+<!-- SPLASH -->
+<div id="splash" class="screen active">
+<svg class="splash-icon" viewBox="0 0 64 64" fill="none">
+<g stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round">
+<line x1="32" y1="2" x2="32" y2="16"/><line x1="32" y1="48" x2="32" y2="62"/>
+<line x1="2" y1="32" x2="16" y2="32"/><line x1="48" y1="32" x2="62" y2="32"/>
+<line x1="10.8" y1="10.8" x2="20.7" y2="20.7"/><line x1="43.3" y1="43.3" x2="53.2" y2="53.2"/>
+<line x1="53.2" y1="10.8" x2="43.3" y2="20.7"/><line x1="20.7" y1="43.3" x2="10.8" y2="53.2"/>
+<line x1="32" y1="6" x2="32" y2="12" opacity=".4"/><line x1="32" y1="52" x2="32" y2="58" opacity=".4"/>
+<line x1="6" y1="32" x2="12" y2="32" opacity=".4"/><line x1="52" y1="32" x2="58" y2="32" opacity=".4"/>
+</g>
+</svg>
+<div class="splash-logo">Approach.</div>
 </div>
 
-<!-- LESSON SCREEN -->
-<div id="lessonScreen">
-  <div class="lesson-header">
-    <button class="back-btn" onclick="closeLesson()">←</button>
-    <div>
-      <div style="font-family:'Unbounded',sans-serif;font-size:15px;font-weight:500;color:#1c1916" id="lessonTopicTitle"></div>
-      <div style="color:rgba(28,25,22,.35);font-size:10px;margin-top:3px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500" id="lessonNum"></div>
-    </div>
-  </div>
-  <div id="lessonLoading">
-    <div class="spinner"></div>
-    <p>Loading session...</p>
-  </div>
-  <div class="lesson-content hidden" id="lessonContent">
-    <div class="lesson-tag" id="lessonTag"></div>
-    <div class="lesson-title" id="lessonTitle"></div>
-    <div class="lesson-body" id="lessonBody"></div>
-    <div class="lesson-takeaway" id="lessonTakeaway"></div>
-    <div class="lesson-challenge"><strong>Today's Challenge</strong><span id="lessonChallenge"></span></div>
-    <div style="display:flex;gap:8px;margin-top:20px">
-      <button class="btn-ghost" style="flex:1;margin-bottom:0" onclick="closeLesson()">← Back</button>
-      <button class="btn-primary" style="flex:2;margin-bottom:0" id="nextLessonBtn" onclick="nextLesson()">Next Session →</button>
-    </div>
-  </div>
+<!-- ONBOARDING -->
+<div id="onboarding" class="screen">
+<div class="ob-slides">
+<!-- Slide 0: Welcome -->
+<div class="ob-slide active" data-slide="0">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+<h1>Approach.</h1>
+<p class="tagline">The confidence you've been waiting for.</p>
+<button class="btn-brand" onclick="obNext()">Get Started</button>
 </div>
+</div>
+<!-- Slide 1: Personalize -->
+<div class="ob-slide" data-slide="1">
+<h1>Personalize</h1>
+<p class="tagline">Tell us a bit about you so we can tailor your experience.</p>
+<input class="ob-input" id="obName" type="text" placeholder="Your first name" autocomplete="given-name" maxlength="30">
+<input class="ob-input" id="obAge" type="number" placeholder="Age" min="16" max="99" inputmode="numeric">
+<input class="ob-input" id="obEmail" type="email" placeholder="Email (optional)" autocomplete="email">
+<button class="btn-brand" onclick="obNext()">Continue</button>
+</div>
+<!-- Slide 2: Goal -->
+<div class="ob-slide" data-slide="2">
+<h1>What's your goal?</h1>
+<p class="tagline">We'll customize your coaching based on what you need most.</p>
+<div class="goal-options">
+<button class="goal-opt" data-goal="Approaching women" onclick="selectGoal(this)">Approaching women</button>
+<button class="goal-opt" data-goal="Text & conversation" onclick="selectGoal(this)">Text &amp; conversation</button>
+<button class="goal-opt" data-goal="Both" onclick="selectGoal(this)">Both</button>
+</div>
+<button class="btn-brand" id="obFinish" onclick="obFinish()" style="margin-top:24px;opacity:0.4;pointer-events:none">Let's go</button>
+</div>
+</div>
+<div class="ob-dots">
+<div class="ob-dot active" data-dot="0"></div>
+<div class="ob-dot" data-dot="1"></div>
+<div class="ob-dot" data-dot="2"></div>
+</div>
+</div>
+
+<!-- MAIN APP -->
+<div id="main" class="screen">
+<div class="tab-area">
+<!-- HOME -->
+<div class="tab-panel active" id="tabHome">
+<h2 class="greeting" id="greetingText">Good morning</h2>
+<p class="greeting-sub" id="greetingSub">Let's build some confidence today.</p>
+<div class="streak-badge" id="streakBadge">&#128293; 1 day streak</div>
+<div class="card insight-card" id="insightCard">
+<div class="insight-label">Today's Insight</div>
+<div id="insightContent">
+<div class="skeleton skel-line w80"></div>
+<div class="skeleton skel-line w60"></div>
+<div class="skeleton skel-line w40"></div>
+</div>
+</div>
+<div class="quick-actions">
+<div class="card card-sm quick-card" onclick="switchTab('coach')">
+<div class="qc-icon">&#128172;</div>
+<h4>Get coached</h4>
+<p>Approach with confidence</p>
+</div>
+<div class="card card-sm quick-card" onclick="switchTab('texts')">
+<div class="qc-icon">&#128241;</div>
+<h4>Analyze texts</h4>
+<p>Decode her messages</p>
+</div>
+</div>
+</div>
+
+<!-- COACH -->
+<div class="tab-panel" id="tabCoach">
+<div class="tab-header">Coach.</div>
+<div class="usage-bar-wrap" id="coachUsageWrap">
+<div class="usage-bar"><div class="usage-bar-fill" id="coachUsageFill" style="width:100%"></div></div>
+<span class="usage-label" id="coachUsageLabel">2 free left</span>
+</div>
+<div id="coachInput">
+<div class="input-area">
+<textarea id="coachTextarea" placeholder="Describe the situation..." maxlength="600" oninput="updateCount(this,'coachCount')"></textarea>
+<span class="char-count" id="coachCount">0/600</span>
+</div>
+<div class="chips">
+<div class="chip" onclick="fillCoach('She\\'s reading alone at a coffee shop')">Coffee shop &#9749;</div>
+<div class="chip" onclick="fillCoach('Cute girl at the gym between sets')">At the gym &#127947;</div>
+<div class="chip" onclick="fillCoach('Standing in line at a grocery store')">Grocery line &#128722;</div>
+<div class="chip" onclick="fillCoach('She\\'s walking her dog in the park')">Dog park &#128054;</div>
+</div>
+<button class="btn-brand" id="coachBtn" onclick="submitCoach()">Get My Move</button>
+</div>
+<div id="coachResults" style="display:none"></div>
+</div>
+
+<!-- TEXTS -->
+<div class="tab-panel" id="tabTexts">
+<div class="tab-header">Texts.</div>
+<div id="textsInput">
+<div class="input-area">
+<textarea id="textsTextarea" placeholder="Paste your conversation&#10;&#10;Me: Hey, how was your weekend?&#10;Her: It was good! Went hiking&#10;Me: Nice, where'd you go?" maxlength="1200" oninput="updateCount(this,'textsCount')" style="min-height:140px"></textarea>
+<span class="char-count" id="textsCount">0/1200</span>
+</div>
+<div class="input-area" style="margin-bottom:12px">
+<textarea id="textsContext" placeholder="Any context? (how you met, how long chatting, etc.)" maxlength="300" oninput="updateCount(this,'textsCtxCount')" style="min-height:60px"></textarea>
+<span class="char-count" id="textsCtxCount">0/300</span>
+</div>
+<div class="chips">
+<div class="chip" onclick="fillTexts('Me: Hey! Great meeting you Saturday\\nHer: Heyy you too! 😊\\nMe: So when are we getting that coffee?\\nHer: Haha maybe this week','Met at a party last weekend')">Post-party texts &#127881;</div>
+<div class="chip" onclick="fillTexts('Me: Hey, how\\'s your day going?\\nHer: Good hbu\\nMe: Not bad. Wanna grab drinks this week?\\nHer: Maybe, I\\'ll let you know','Matched on Hinge 3 days ago')">Dating app &#128140;</div>
+</div>
+<button class="btn-brand" id="textsBtn" onclick="submitTexts()">Analyze</button>
+</div>
+<div id="textsResults" style="display:none"></div>
+</div>
+
+<!-- YOU -->
+<div class="tab-panel" id="tabYou">
+<div class="profile-header">
+<div class="monogram" id="profileMonogram">?</div>
+<div class="profile-name" id="profileName">—</div>
+<div class="profile-plan" id="profilePlan">Free Plan</div>
+</div>
+<div class="stats-row">
+<div class="card card-sm stat-box">
+<div class="stat-num" id="statApproaches">0</div>
+<div class="stat-label">Approaches</div>
+</div>
+<div class="card card-sm stat-box">
+<div class="stat-num" id="statTexts">0</div>
+<div class="stat-label">Texts</div>
+</div>
+<div class="card card-sm stat-box">
+<div class="stat-num" id="statSessions">0</div>
+<div class="stat-label">Sessions</div>
+</div>
+</div>
+<div class="section-title">Programs</div>
+<div class="programs-grid" id="programsGrid"></div>
+<div class="section-title">Settings</div>
+<div class="card" style="padding:0;overflow:hidden">
+<div class="settings-list">
+<div class="setting-row" onclick="showPaywall()">
+<span class="sr-left">Plan</span>
+<span class="sr-right" id="settingPlan">Free — Upgrade &#8250;</span>
+</div>
+<div class="setting-row" id="reminderRow">
+<span class="sr-left">Daily Reminder</span>
+<span class="sr-right" id="reminderStatus">Off</span>
+</div>
+<div class="setting-row">
+<span class="sr-left">Version</span>
+<span class="sr-right">1.0.0</span>
+</div>
+<div class="setting-row" onclick="window.open('https://approach.app/privacy','_blank')">
+<span class="sr-left">Privacy Policy</span>
+<span class="sr-right">&#8250;</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+<button class="nav-btn active" data-tab="home" onclick="switchTab('home')">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+<span>Home</span>
+</button>
+<button class="nav-btn" data-tab="coach" onclick="switchTab('coach')">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+<span>Coach</span>
+</button>
+<button class="nav-btn" data-tab="texts" onclick="switchTab('texts')">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+<span>Texts</span>
+</button>
+<button class="nav-btn" data-tab="you" onclick="switchTab('you')">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+<span>You</span>
+</button>
+</div>
+</div>
+
+<!-- LESSON OVERLAY -->
+<div id="lessonOverlay">
+<div class="lesson-top">
+<button class="lesson-back" onclick="closeLesson()">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+</button>
+<div>
+<div class="lesson-topic" id="lessonTopic">—</div>
+<div class="lesson-session" id="lessonSession">Session 1 of 5</div>
+</div>
+</div>
+<div class="lesson-body" id="lessonBody">
+<div class="spinner"></div>
+</div>
+<div class="lesson-bottom">
+<button class="btn-brand" id="lessonNextBtn" onclick="nextLesson()">Next Session</button>
+</div>
+</div>
+
+<!-- PAYWALL -->
+<div id="paywall">
+<button class="pw-close" onclick="closePaywall()">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+</button>
+<div class="pw-content">
+<div class="pw-logo">Approach Pro</div>
+<p class="pw-subtitle">Unlock your full potential</p>
+<div class="pw-features">
+<div class="pw-feat"><div class="pf-icon">&#9889;</div><div class="pf-text">Unlimited Approaches</div></div>
+<div class="pw-feat"><div class="pf-icon">&#128172;</div><div class="pf-text">Unlimited Text Analysis</div></div>
+<div class="pw-feat"><div class="pf-icon">&#129504;</div><div class="pf-text">Full Mindset Program</div></div>
+<div class="pw-feat"><div class="pf-icon">&#128274;</div><div class="pf-text">Approach Remembers You</div></div>
+</div>
+<div class="pw-plans">
+<div class="pw-plan selected" data-plan="annual" onclick="selectPlan(this)">
+<div class="plan-badge">Best Value</div>
+<div class="plan-name">Annual — $89.99/year</div>
+<div class="plan-price">Just $7.50/mo</div>
+</div>
+<div class="pw-plan" data-plan="monthly" onclick="selectPlan(this)">
+<div class="plan-name">Monthly — $14.99/mo</div>
+<div class="plan-price">Cancel anytime</div>
+</div>
+</div>
+<button class="btn-pro" onclick="startPro()">Start Pro Access</button>
+<p class="pw-legal">Auto-renews. Cancel anytime in Settings.<br>By continuing you agree to our Terms of Service.</p>
+</div>
+</div>
+
+</div>
+
 <script>
-const STATE={approachCount:0,textCount:0,lessonCount:0,currentTopic:null,currentLesson:1,isPro:false,freeApproaches:0,freeTexts:0,userName:'',userGoal:'',userAge:'',userEmail:''};
-const FREE_APPROACH_LIMIT=2;
-const FREE_TEXT_LIMIT=1;
+/* ============ STATE ============ */
+const STATE = {
+  approachCount: 0,
+  textCount: 0,
+  lessonCount: 0,
+  currentTopic: null,
+  currentLesson: 1,
+  isPro: false,
+  freeApproaches: 2,
+  freeTexts: 1,
+  userName: '',
+  userGoal: '',
+  userAge: '',
+  userEmail: '',
+  streak: 1,
+  lessonProgress: {}
+};
 
-/* ONBOARDING */
-function obNext(step){document.getElementById('ob'+step).classList.remove('active');document.getElementById('ob'+(step+1)).classList.add('active');}
-function obCheckName(){const v=document.getElementById('obName').value.trim();document.getElementById('obNameBtn').disabled=v.length<2;}
-function obSkipName(){obNext(2);}
-function obSelect(el,val){document.querySelectorAll('.ob-option').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');STATE.userGoal=val;document.getElementById('obGoalBtn').disabled=false;}
-function obFinish(){
-  const name=document.getElementById('obName').value.trim();
-  STATE.userName=name||'';
-  const age=document.getElementById('obAge').value.trim();
-  STATE.userAge=age||'';
-  const email=document.getElementById('obEmail').value.trim();
-  STATE.userEmail=email||'';
-  applyUserName(name);
-  document.getElementById('onboarding').classList.add('gone');
-  localStorage.setItem('ap_onboarded','1');
-  if(STATE.userName) localStorage.setItem('ap_name',STATE.userName);
-  updateUsageUI();
-  updateGreeting();
-  loadDailyInsight();
-  if(email||name){
-    fetch('/api/onboard',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email:email||'',name:name||'',age:age?parseInt(age):null,goal:STATE.userGoal||'',date:new Date().toISOString().split('T')[0]})
-    }).catch(()=>{});
-  }
-}
-function applyUserName(name){
-  if(!name)return;
-  const pn=document.getElementById('profileName');if(pn) pn.textContent=name;
-  const pm=document.getElementById('profileMonogram');if(pm) pm.textContent=name[0].toUpperCase();
-}
+const PROGRAMS = [
+  { id: 'body-language', name: 'Body Language', icon: '🧍', sessions: 5 },
+  { id: 'handling-rejection', name: 'Handling Rejection', icon: '💪', sessions: 5 },
+  { id: 'eye-contact', name: 'Eye Contact', icon: '👁️', sessions: 5 },
+  { id: 'voice-tone', name: 'Voice & Tone', icon: '🗣️', sessions: 5 },
+  { id: 'stop-overthinking', name: 'Stop Overthinking', icon: '🧠', sessions: 5 },
+  { id: 'building-presence', name: 'Building Presence', icon: '✨', sessions: 5 },
+  { id: 'sexual-confidence', name: 'Sexual Confidence', icon: '🔥', sessions: 5 },
+  { id: 'ask-her-out', name: 'Ask Her Out', icon: '📅', sessions: 5 },
+  { id: 'conversation-flow', name: 'Conversation Flow', icon: '💬', sessions: 5 },
+  { id: 'less-available', name: 'Less Available', icon: '⏳', sessions: 5 }
+];
 
-/* PAYWALL */
-let selectedPlan='yearly';
-function selectPlan(plan){selectedPlan=plan;document.getElementById('plan-yearly').classList.toggle('sel',plan==='yearly');document.getElementById('plan-monthly').classList.toggle('sel',plan==='monthly');}
-function openPaywall(){document.getElementById('paywall').classList.add('open');}
-function closePaywall(){document.getElementById('paywall').classList.remove('open');}
-function completePurchase(){
-  STATE.isPro=true;closePaywall();localStorage.setItem('ap_pro','1');
-  const pr=document.getElementById('profilePlanRow');
-  if(pr){pr.textContent='Active';pr.style.background='none';pr.style.color='rgba(28,25,22,.35)';pr.style['-webkit-text-fill-color']='rgba(28,25,22,.35)';}
-  const b=document.getElementById('coachUsageBar');const h=document.getElementById('coachUsageHint');
-  if(b) b.style.display='none';if(h) h.style.display='none';
-}
-function updateUsageUI(){
-  if(STATE.isPro)return;
-  const used=STATE.freeApproaches;const remaining=Math.max(0,FREE_APPROACH_LIMIT-used);
-  const hint=document.getElementById('coachUsageHint');const bar=document.getElementById('coachUsageBar');
-  if(hint) hint.textContent=remaining===0?'Free uses exhausted · Upgrade to continue':remaining+' of '+FREE_APPROACH_LIMIT+' free '+(remaining===1?'use':'uses')+' remaining';
-  if(bar){bar.querySelectorAll('.usage-pip').forEach((p,i)=>p.classList.toggle('used',i<used));}
-}
-function checkCoachLimit(){if(STATE.isPro)return true;if(STATE.freeApproaches>=FREE_APPROACH_LIMIT){openPaywall();return false;}return true;}
-function checkTextLimit(){if(STATE.isPro)return true;if(STATE.freeTexts>=FREE_TEXT_LIMIT){openPaywall();return false;}return true;}
-
-/* TABS */
-function switchTab(tab){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(n=>n.classList.remove('active'));
-  document.getElementById('tab-'+tab).classList.add('active');
-  document.getElementById('nav-'+tab).classList.add('active');
-  document.getElementById('tabContent').scrollTop=0;
-}
-
-/* HOME */
-function updateGreeting(){
-  const h=new Date().getHours();
-  let g=h<12?'Good morning':'Good afternoon';if(h>=18)g='Good evening';
-  if(STATE.userName)g+=', '+STATE.userName;
-  g+='.';
-  document.getElementById('homeGreeting').textContent=g;
-  // Streak
-  const today=new Date().toDateString();
-  const last=localStorage.getItem('ap_last_visit');
-  let streak=parseInt(localStorage.getItem('ap_streak')||'0');
-  if(last!==today){
-    const yesterday=new Date(Date.now()-86400000).toDateString();
-    streak=(last===yesterday)?streak+1:1;
-    localStorage.setItem('ap_streak',streak);
-    localStorage.setItem('ap_last_visit',today);
-  }
-  if(streak<1)streak=1;
-  document.getElementById('streakBadge').innerHTML='🔥 '+streak+' day'+(streak>1?'s':'')+' streak';
-}
-/* API */
-async function callClaude(system,userMsg){
-  const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system,messages:[{role:'user',content:userMsg}]})});
-  return res.json();
-}
-
-/* PROMPTS */
-const APPROACH_PROMPT=`You are Approach — a sharp, honest confidence coach. Not a pickup artist. The trusted friend every guy wishes he had.
+const APPROACH_PROMPT = `You are Approach — a sharp, honest confidence coach. Not a pickup artist. The trusted friend every guy wishes he had.
 VOICE RULES:
 - Write like a real person texts. Short sentences. Natural.
 - Contractions always. NO pickup lines. NO cringe.
@@ -623,257 +863,627 @@ VOICE RULES:
 RESPOND ONLY IN THIS JSON (no markdown, no backticks):
 {"situationRead":"2 sentences. Honest, casual, zero fluff.","openers":[{"type":"Observational","opener":"Specific to their situation.","followUp":"Natural follow-up.","why":"One casual sentence."},{"type":"Playful","opener":"Light, fun, slightly teasing.","followUp":"Keeps energy going.","why":"One sentence."},{"type":"Direct","opener":"Honest and confident. Short.","followUp":"Moves it forward.","why":"One sentence."}],"bodyLanguageTip":"One specific tip for THIS exact situation.","whatToAvoid":"One thing that would kill this approach. Blunt."}`;
 
-const TEXT_PROMPT=`You are Approach — a sharp, emotionally honest coach analyzing a text conversation.
+const TEXT_PROMPT = `You are Approach — a sharp, emotionally honest coach analyzing a text conversation.
 Be honest even if it's not what he wants to hear. If she's cold, say it straight.
 Replies sound like a real guy texts — short, natural.
 RESPOND ONLY IN THIS JSON (no markdown):
 {"vibeRead":"2-3 honest sentences.","interestLevel":3,"interestLabel":"Interested","replies":[{"style":"Chill","reply":"actual message","why":"one sentence"},{"style":"Flirty","reply":"actual message","why":"one sentence"},{"style":"Direct","reply":"moves toward meeting up","why":"one sentence"}],"timingTip":"When and how to send.","flag":{"type":"green","observation":"One honest observation."}}
 interestLevel: 1=cold 2=lukewarm 3=interested 4=keen 5=very interested`;
 
-const MINDSET_PROMPT=`You are Approach — a grounded, mature confidence coach for men.
+const MINDSET_PROMPT = `You are Approach — a grounded, mature confidence coach for men.
 Direct, warm, no fluff. Wise older brother energy.
 RESPOND ONLY IN THIS JSON (no markdown):
 {"title":"Punchy title, max 6 words","lesson":"3-4 sentences. Practical, actionable. Talk to him like he's capable of real growth.","keyTakeaway":"One sentence. The single most important thing.","dailyChallenge":"One specific action for TODAY. Start with a verb. Be specific not generic."}`;
 
-/* HOME INSIGHT */
-async function loadDailyInsight(){
-  window._insightLoaded=true;
-  const topics=['Body Language','Stop Overthinking','Eye Contact','Building Presence','Conversation Flow','Voice & Tone'];
-  const topic=topics[new Date().getDay()%topics.length];
-  try{
-    const data=await callClaude(MINDSET_PROMPT,`Topic: ${topic}, Lesson 1`);
-    const raw=(data.content||[]).map(b=>b.text||'').join('');
-    const r=JSON.parse(raw.replace(/```json|```/g,'').trim());
-    document.getElementById('insightCard').innerHTML=`
-      <div class="insight-tag">Today · ${topic}</div>
-      <div class="insight-title">${r.title}</div>
-      <div class="insight-text">${r.lesson}</div>
-      <div class="insight-takeaway">${r.keyTakeaway}</div>
-      <div class="insight-challenge">→ ${r.dailyChallenge}</div>`;
-  }catch(e){
-    document.getElementById('insightCard').innerHTML=`<div class="insight-tag">Today's Insight</div><div style="color:rgba(28,25,22,.35);font-size:12px;padding:8px 0">Couldn't load. Pull down to retry.</div>`;
-  }
-}
-
-/* COACH */
-function onCoachInput(){
-  const v=document.getElementById('coachInput').value;
-  document.getElementById('coachInputCard').classList.toggle('focused',v.length>0);
-  document.getElementById('coachHint').textContent=v.length>0?v.length+'/400':'describe what you see';
-  document.getElementById('coachClearBtn').classList.toggle('hidden',v.length===0);
-  document.getElementById('coachSubmitBtn').disabled=v.trim().length<10;
-}
-function clearCoach(){document.getElementById('coachInput').value='';onCoachInput();}
-function useCoachExample(el){document.getElementById('coachInput').value=el.textContent.trim();onCoachInput();}
-
-async function submitCoach(){
-  if(!checkCoachLimit())return;
-  const input=document.getElementById('coachInput').value.trim();
-  if(input.length<10)return;
-  const btn=document.getElementById('coachSubmitBtn');
-  btn.innerHTML='<div class="spinner" style="width:16px;height:16px;border-width:2px"></div> Reading...';
-  btn.disabled=true;
-  document.getElementById('coachError').classList.add('hidden');
-  document.getElementById('coachResults').classList.add('hidden');
-  document.getElementById('coachResults').innerHTML='';
-  document.getElementById('coachExamples').classList.add('hidden');
-  document.getElementById('coachSkeletons').classList.remove('hidden');
-  try{
-    const data=await callClaude(APPROACH_PROMPT,input);
-    const raw=(data.content||[]).map(b=>b.text||'').join('');
-    const result=JSON.parse(raw.replace(/```json|```/g,'').trim());
-    renderCoach(result);
-    STATE.approachCount++;
-    if(!STATE.isPro){STATE.freeApproaches++;updateUsageUI();}
-    document.getElementById('statApproaches').textContent=STATE.approachCount;
-  }catch(e){
-    document.getElementById('coachError').textContent='Something went wrong. Try again.';
-    document.getElementById('coachError').classList.remove('hidden');
-    document.getElementById('coachExamples').classList.remove('hidden');
-  }finally{
-    document.getElementById('coachSkeletons').classList.add('hidden');
-    btn.innerHTML='Get My Move →';btn.disabled=false;
-  }
-}
-
-function renderCoach(r){
-  const c=document.getElementById('coachResults');c.innerHTML='';c.classList.remove('hidden');
-  const items=[];
-  items.push(mkEl(`<div class="result-card sit-card"><div class="card-tag">Situation Read</div><div class="sit-text">"${r.situationRead}"</div></div>`));
-  const nums=['01','02','03'];
-  (r.openers||[]).forEach((op,i)=>{
-    items.push(mkEl(`<div class="result-card opener-card">
-      <div class="opener-type-row">
-        <div class="opener-type-num">${nums[i]}</div>
-        <span class="opener-type-label">${op.type}</span>
-        <button class="opener-copy" onclick="copyTxt('${esc(op.opener)}',this)">Copy</button>
-      </div>
-      <div class="opener-quote">"${op.opener}"</div>
-      <div class="opener-followup">↳ ${op.followUp}</div>
-      <div class="opener-why">→ ${op.why}</div>
-    </div>`));
+/* ============ API ============ */
+async function callClaude(system, userMsg) {
+  const res = await fetch('/api/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      system,
+      messages: [{ role: 'user', content: userMsg }]
+    })
   });
-  const tipRow=document.createElement('div');tipRow.className='tip-row result-card';
-  tipRow.innerHTML=`<div class="tip-card"><div class="tip-label">Body Language</div><div class="tip-text">${r.bodyLanguageTip}</div></div><div class="tip-card"><div class="tip-label">Avoid</div><div class="tip-text">${r.whatToAvoid}</div></div>`;
-  items.push(tipRow);
-  items.push(mkEl(`<button class="btn-ghost result-card" onclick="resetCoach()">↩ New situation</button>`));
-  items.forEach((el,i)=>setTimeout(()=>c.appendChild(el),i*100));
+  return res.json();
 }
-function resetCoach(){
-  document.getElementById('coachInput').value='';
-  document.getElementById('coachResults').innerHTML='';
-  document.getElementById('coachResults').classList.add('hidden');
-  document.getElementById('coachExamples').classList.remove('hidden');
-  onCoachInput();
-}
-/* TEXT COACH */
-function onTextInput(){
-  const v=document.getElementById('textInput').value;
-  document.getElementById('textInputCard').classList.toggle('focused',v.length>0);
-  document.getElementById('textHint').textContent=v.length>0?v.length+'/1000':'paste your chat';
-  document.getElementById('textClearBtn').classList.toggle('hidden',v.length===0);
-  document.getElementById('textSubmitBtn').disabled=v.trim().length<20;
-}
-function clearText(){document.getElementById('textInput').value='';document.getElementById('textContext').value='';onTextInput();}
-const TEXT_EXAMPLES={
-  1:"Me: hey great meeting you last night\nHer: haha yeah was fun!\nMe: we should grab a drink sometime\nHer: maybe :)\nMe: you free this weekend?\nHer: might be, what did you have in mind",
-  2:"Me: hey it's [name] from the party\nHer: oh hey! how are you\nMe: good! you guys left early\nHer: yeah had work early\nMe: fair enough, you free this week?\nHer: this week is pretty busy tbh"
-};
-function useTextExample(n){document.getElementById('textInput').value=TEXT_EXAMPLES[n];onTextInput();}
 
-async function submitText(){
-  if(!checkTextLimit())return;
-  const input=document.getElementById('textInput').value.trim();
-  const ctx=document.getElementById('textContext').value.trim();
-  if(input.length<20)return;
-  const btn=document.getElementById('textSubmitBtn');
-  btn.innerHTML='<div class="spinner" style="width:16px;height:16px;border-width:2px"></div> Analyzing...';
-  btn.disabled=true;
-  document.getElementById('textError').classList.add('hidden');
-  document.getElementById('textResults').classList.add('hidden');
-  document.getElementById('textResults').innerHTML='';
-  document.getElementById('textExamples').classList.add('hidden');
-  document.getElementById('textSkeletons').classList.remove('hidden');
-  const fullInput=ctx?`Conversation:\n${input}\n\nContext: ${ctx}`:input;
-  try{
-    const data=await callClaude(TEXT_PROMPT,fullInput);
-    const raw=(data.content||[]).map(b=>b.text||'').join('');
-    const result=JSON.parse(raw.replace(/```json|```/g,'').trim());
-    renderText(result);
-    STATE.textCount++;
-    if(!STATE.isPro){STATE.freeTexts++;}
-    document.getElementById('statTexts').textContent=STATE.textCount;
-  }catch(e){
-    document.getElementById('textError').textContent='Something went wrong. Try again.';
-    document.getElementById('textError').classList.remove('hidden');
-    document.getElementById('textExamples').classList.remove('hidden');
-  }finally{
-    document.getElementById('textSkeletons').classList.add('hidden');
-    btn.innerHTML='Analyze →';btn.disabled=false;
+function parseClaudeResponse(response) {
+  try {
+    if (response && response.content && response.content[0]) {
+      let text = response.content[0].text;
+      text = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+      return JSON.parse(text);
+    }
+    return null;
+  } catch (e) {
+    console.error('Parse error:', e);
+    return null;
   }
 }
-function renderText(r){
-  const c=document.getElementById('textResults');c.innerHTML='';c.classList.remove('hidden');
-  const lvl=r.interestLevel||3;const pct=((lvl-1)/4)*100;
-  const items=[];
-  items.push(mkEl(`<div class="result-card sit-card">
-    <div class="card-tag">Vibe Read</div>
-    <div class="sit-text" style="margin-bottom:14px">"${r.vibeRead}"</div>
-    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(135deg,#c8714a,#b85c7a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:600;margin-bottom:8px">${r.interestLabel||'Interested'}</div>
-    <div class="interest-bar-wrap">
-      <div class="interest-labels"><span>Cold</span><span>Lukewarm</span><span>Interested</span><span>Keen</span><span>Hot</span></div>
-      <div class="interest-bar"><div class="interest-fill" style="width:${pct}%"></div></div>
-    </div>
-  </div>`));
-  const styles={Chill:'01',Flirty:'02',Direct:'03'};
-  (r.replies||[]).forEach((rep,i)=>{
-    items.push(mkEl(`<div class="reply-card result-card" style="animation-delay:${(i+1)*.12}s">
-      <div class="reply-style-row">
-        <div class="opener-type-num">${styles[rep.style]||'0'+(i+1)}</div>
-        <span class="reply-style-label">${rep.style}</span>
-        <button class="reply-copy" onclick="copyTxt('${esc(rep.reply)}',this)">Copy</button>
-      </div>
-      <div class="reply-text">"${rep.reply}"</div>
-      <div class="reply-why">${rep.why}</div>
-    </div>`));
-  });
-  if(r.timingTip) items.push(mkEl(`<div class="result-card sit-card" style="animation-delay:.5s"><div class="card-tag">Timing</div><div class="sit-text">${r.timingTip}</div></div>`));
-  if(r.flag){
-    const g=r.flag.type==='green';
-    items.push(mkEl(`<div class="flag-card ${g?'green':'red'} result-card" style="animation-delay:.62s">
-      <span style="font-size:11px;font-weight:600">${g?'↑':'↓'}</span>
-      <span style="color:${g?'rgba(28,25,22,.6)':'rgba(180,50,50,.7)'};font-size:13px;line-height:1.6">${r.flag.observation}</span>
-    </div>`));
-  }
-  items.push(mkEl(`<button class="btn-ghost result-card" style="animation-delay:.75s" onclick="resetText()">↩ New conversation</button>`));
-  items.forEach((el,i)=>setTimeout(()=>c.appendChild(el),i*100));
-}
-function resetText(){
-  document.getElementById('textInput').value='';document.getElementById('textContext').value='';
-  document.getElementById('textResults').innerHTML='';document.getElementById('textResults').classList.add('hidden');
-  document.getElementById('textExamples').classList.remove('hidden');onTextInput();
-}
 
-/* LESSONS */
-async function openLesson(topic,lessonNum){
-  STATE.currentTopic=topic;STATE.currentLesson=lessonNum;
-  document.getElementById('lessonScreen').classList.add('open');
-  document.getElementById('lessonTopicTitle').textContent=topic;
-  document.getElementById('lessonNum').textContent='Session '+lessonNum+' of 5';
-  document.getElementById('lessonTag').textContent=topic.toUpperCase();
-  document.getElementById('lessonLoading').classList.remove('hidden');
-  document.getElementById('lessonContent').classList.add('hidden');
-  try{
-    const data=await callClaude(MINDSET_PROMPT,'Topic: '+topic+', Session '+lessonNum+' of 5. Make this distinct and specific.');
-    const raw=(data.content||[]).map(b=>b.text||'').join('');
-    const r=JSON.parse(raw.replace(/```json|```/g,'').trim());
-    document.getElementById('lessonTitle').textContent=r.title;
-    document.getElementById('lessonBody').textContent=r.lesson;
-    document.getElementById('lessonTakeaway').textContent=r.keyTakeaway;
-    document.getElementById('lessonChallenge').textContent=r.dailyChallenge;
-    const nb=document.getElementById('nextLessonBtn');
-    if(lessonNum>=5){nb.textContent='Done';nb.onclick=closeLesson;}
-    else{nb.textContent='Next Session →';nb.onclick=nextLesson;}
-    document.getElementById('lessonLoading').classList.add('hidden');
-    document.getElementById('lessonContent').classList.remove('hidden');
-    STATE.lessonCount++;document.getElementById('statLessons').textContent=STATE.lessonCount;
-  }catch(e){
-    document.getElementById('lessonLoading').innerHTML='<p style="color:rgba(28,25,22,.4)">Failed to load. Try again.</p>';
-  }
-}
-function nextLesson(){const n=STATE.currentLesson+1;if(n<=5)openLesson(STATE.currentTopic,n);else closeLesson();}
-function closeLesson(){document.getElementById('lessonScreen').classList.remove('open');}
+/* ============ COPY ICON SVG ============ */
+const COPY_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
 
-/* UTILS */
-function mkEl(html){const el=document.createElement('div');el.innerHTML=html;return el.firstElementChild;}
-function esc(s){return(s||'').replace(/'/g,"&#39;").replace(/"/g,"&quot;");}
-function copyTxt(text,btn){
-  navigator.clipboard?.writeText(text.replace(/&#39;/g,"'").replace(/&quot;/g,'"')).catch(()=>{});
-  const orig=btn.textContent;btn.textContent='Copied';btn.style.color='#b85c7a';
-  setTimeout(()=>{btn.textContent=orig;btn.style.color='';},2000);
-}
-
-/* SPLASH + INIT */
-(function(){
-  const doneOnboarding=localStorage.getItem('ap_onboarded');
-  setTimeout(()=>{
-    const s=document.getElementById('splash');
-    s.classList.add('fade-out');
-    setTimeout(()=>{
-      s.style.display='none';
-      if(doneOnboarding){
-        document.getElementById('onboarding').classList.add('gone');
-        updateUsageUI();
-        const saved=localStorage.getItem('ap_name');
-        if(saved){STATE.userName=saved;applyUserName(saved);}
-        const pro=localStorage.getItem('ap_pro');
-        if(pro){STATE.isPro=true;completePurchase();}
-        updateGreeting();
-        loadDailyInsight();
+/* ============ SPLASH ============ */
+window.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  setTimeout(() => {
+    document.getElementById('splash').style.transition = 'opacity 0.4s';
+    document.getElementById('splash').style.opacity = '0';
+    setTimeout(() => {
+      document.getElementById('splash').classList.remove('active');
+      if (localStorage.getItem('ap_onboarded')) {
+        showMain();
+      } else {
+        document.getElementById('onboarding').classList.add('active');
       }
-    },600);
-  },1600);
-})();
+    }, 400);
+  }, 1600);
+});
+
+/* ============ ONBOARDING ============ */
+let obSlide = 0;
+let selectedGoal = '';
+
+function obNext() {
+  if (obSlide === 1) {
+    const name = document.getElementById('obName').value.trim();
+    const age = document.getElementById('obAge').value.trim();
+    if (!name) {
+      document.getElementById('obName').style.borderColor = 'rgba(220,60,60,0.5)';
+      document.getElementById('obName').focus();
+      return;
+    }
+    STATE.userName = name;
+    STATE.userAge = age;
+    STATE.userEmail = document.getElementById('obEmail').value.trim();
+  }
+  const slides = document.querySelectorAll('.ob-slide');
+  slides[obSlide].classList.remove('active');
+  slides[obSlide].classList.add('left');
+  obSlide++;
+  slides[obSlide].classList.add('active');
+  updateDots();
+}
+
+function selectGoal(el) {
+  document.querySelectorAll('.goal-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedGoal = el.dataset.goal;
+  const btn = document.getElementById('obFinish');
+  btn.style.opacity = '1';
+  btn.style.pointerEvents = 'auto';
+}
+
+function updateDots() {
+  document.querySelectorAll('.ob-dot').forEach((d, i) => {
+    d.classList.toggle('active', i === obSlide);
+  });
+}
+
+function obFinish() {
+  if (!selectedGoal) return;
+  STATE.userGoal = selectedGoal;
+  localStorage.setItem('ap_onboarded', '1');
+  localStorage.setItem('ap_name', STATE.userName);
+  saveState();
+
+  // Fire and forget — route through server proxy to keep token secure
+  fetch('/api/onboard', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: STATE.userEmail || '',
+      name: STATE.userName,
+      age: parseInt(STATE.userAge) || 0,
+      goal: STATE.userGoal,
+      date: new Date().toISOString().split('T')[0]
+    })
+  }).catch(() => {});
+
+  document.getElementById('onboarding').classList.remove('active');
+  showMain();
+}
+
+/* ============ MAIN ============ */
+function showMain() {
+  document.getElementById('main').classList.add('active');
+  updateGreeting();
+  updateStreak();
+  updateProfile();
+  updateUsage();
+  renderPrograms();
+  loadDailyInsight();
+}
+
+function updateGreeting() {
+  const h = new Date().getHours();
+  let greeting = 'Good evening';
+  if (h < 12) greeting = 'Good morning';
+  else if (h < 17) greeting = 'Good afternoon';
+  const name = STATE.userName || 'there';
+  document.getElementById('greetingText').textContent = `${greeting}, ${name}`;
+  const subs = [
+    "Let's build some confidence today.",
+    "Ready to level up?",
+    "What's the move today?",
+    "Time to put yourself out there."
+  ];
+  document.getElementById('greetingSub').textContent = subs[Math.floor(Math.random() * subs.length)];
+}
+
+function updateStreak() {
+  const lastDate = localStorage.getItem('ap_last_date');
+  const today = new Date().toISOString().split('T')[0];
+  let streak = parseInt(localStorage.getItem('ap_streak')) || 0;
+  if (lastDate === today) {
+    // same day
+  } else if (lastDate) {
+    const last = new Date(lastDate);
+    const now = new Date(today);
+    const diff = (now - last) / (1000 * 60 * 60 * 24);
+    if (diff === 1) {
+      streak++;
+    } else {
+      streak = 1;
+    }
+  } else {
+    streak = 1;
+  }
+  localStorage.setItem('ap_last_date', today);
+  localStorage.setItem('ap_streak', streak);
+  STATE.streak = streak;
+  document.getElementById('streakBadge').innerHTML = `&#128293; ${streak} day streak`;
+}
+
+/* ============ DAILY INSIGHT ============ */
+async function loadDailyInsight() {
+  const cacheKey = 'ap_insight_' + new Date().toISOString().split('T')[0];
+  const cached = localStorage.getItem(cacheKey);
+  const container = document.getElementById('insightContent');
+
+  if (cached) {
+    container.innerHTML = `<p class="insight-text">${cached}</p>`;
+    return;
+  }
+
+  try {
+    const res = await callClaude(
+      'You are Approach — a grounded confidence coach. Give one short daily insight (2-3 sentences max) about confidence, social skills, or self-improvement for men. Be direct, warm, practical. No fluff. Respond with just the text, no JSON.',
+      'Give me today\'s confidence insight. Topic: ' + ['approaching', 'body language', 'conversation', 'self-worth', 'presence', 'rejection'][Math.floor(Math.random() * 6)]
+    );
+    let text = '';
+    if (res && res.content && res.content[0]) {
+      text = res.content[0].text;
+    } else {
+      throw new Error('No response');
+    }
+    localStorage.setItem(cacheKey, text);
+    container.innerHTML = `<p class="insight-text">${text}</p>`;
+  } catch (e) {
+    container.innerHTML = `<p class="insight-text">Confidence isn't about never feeling nervous. It's about walking up anyway. Today, do one thing that scares you a little.</p>`;
+  }
+}
+
+/* ============ TABS ============ */
+function switchTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const tabMap = { home: 'tabHome', coach: 'tabCoach', texts: 'tabTexts', you: 'tabYou' };
+  document.getElementById(tabMap[tab]).classList.add('active');
+  document.querySelector(`.nav-btn[data-tab="${tab}"]`).classList.add('active');
+}
+
+/* ============ COACH ============ */
+function updateCount(el, countId) {
+  document.getElementById(countId).textContent = `${el.value.length}/${el.maxLength}`;
+}
+
+function fillCoach(text) {
+  document.getElementById('coachTextarea').value = text;
+  updateCount(document.getElementById('coachTextarea'), 'coachCount');
+}
+
+function updateUsage() {
+  if (STATE.isPro) {
+    document.getElementById('coachUsageWrap').style.display = 'none';
+    return;
+  }
+  const pct = (STATE.freeApproaches / 2) * 100;
+  document.getElementById('coachUsageFill').style.width = pct + '%';
+  document.getElementById('coachUsageLabel').textContent = `${STATE.freeApproaches} free left`;
+}
+
+async function submitCoach() {
+  const text = document.getElementById('coachTextarea').value.trim();
+  if (!text) return;
+
+  if (!STATE.isPro && STATE.freeApproaches <= 0) {
+    showPaywall();
+    return;
+  }
+
+  const btn = document.getElementById('coachBtn');
+  btn.disabled = true;
+  btn.textContent = 'Thinking...';
+  document.getElementById('coachResults').style.display = 'block';
+  document.getElementById('coachResults').innerHTML = `
+    <div class="card"><div class="skeleton skel-line w80"></div><div class="skeleton skel-line w60"></div></div>
+    <div class="card"><div class="skeleton skel-block"></div></div>
+    <div class="card"><div class="skeleton skel-block"></div></div>
+    <div class="card"><div class="skeleton skel-block"></div></div>
+  `;
+
+  try {
+    const res = await callClaude(APPROACH_PROMPT, text);
+    const data = parseClaudeResponse(res);
+    if (!data) throw new Error('Parse failed');
+
+    if (!STATE.isPro) {
+      STATE.freeApproaches--;
+      updateUsage();
+    }
+    STATE.approachCount++;
+    saveState();
+    document.getElementById('statApproaches').textContent = STATE.approachCount;
+
+    let html = `
+      <div class="card result-section" style="animation:fadeUp .4s ease">
+        <div class="result-label">Situation Read</div>
+        <p style="font-size:15px;line-height:1.55;color:var(--text)">${escHtml(data.situationRead)}</p>
+      </div>
+    `;
+
+    data.openers.forEach(o => {
+      html += `
+        <div class="card opener-card result-section" style="animation:fadeUp .4s ease">
+          <span class="type-badge">${escHtml(o.type)}</span>
+          <button class="copy-btn" onclick="copyText(this,'${escAttr(o.opener)}')">${COPY_SVG}</button>
+          <p class="opener-text">"${escHtml(o.opener)}"</p>
+          <p class="followup">Then: "${escHtml(o.followUp)}"</p>
+          <p class="why">${escHtml(o.why)}</p>
+        </div>
+      `;
+    });
+
+    html += `
+      <div class="card tip-card result-section" style="animation:fadeUp .4s ease">
+        <span class="tip-icon">🧍</span>
+        <div><div class="result-label" style="margin-bottom:4px">Body Language</div><p class="tip-text">${escHtml(data.bodyLanguageTip)}</p></div>
+      </div>
+      <div class="card tip-card result-section" style="animation:fadeUp .4s ease">
+        <span class="tip-icon">🚫</span>
+        <div><div class="result-label" style="margin-bottom:4px">What to Avoid</div><p class="tip-text">${escHtml(data.whatToAvoid)}</p></div>
+      </div>
+      <button class="btn-reset" onclick="resetCoach()">New situation</button>
+    `;
+
+    document.getElementById('coachResults').innerHTML = html;
+    document.getElementById('coachInput').style.display = 'none';
+  } catch (e) {
+    document.getElementById('coachResults').innerHTML = `
+      <div class="error-state">
+        <p>Something went wrong. Try again.</p>
+        <button onclick="resetCoach()">Try Again</button>
+      </div>
+    `;
+  }
+  btn.disabled = false;
+  btn.textContent = 'Get My Move';
+}
+
+function resetCoach() {
+  document.getElementById('coachInput').style.display = 'block';
+  document.getElementById('coachResults').style.display = 'none';
+  document.getElementById('coachResults').innerHTML = '';
+  document.getElementById('coachTextarea').value = '';
+  document.getElementById('coachCount').textContent = '0/600';
+}
+
+/* ============ TEXTS ============ */
+function fillTexts(convo, ctx) {
+  document.getElementById('textsTextarea').value = convo;
+  document.getElementById('textsContext').value = ctx || '';
+  updateCount(document.getElementById('textsTextarea'), 'textsCount');
+  updateCount(document.getElementById('textsContext'), 'textsCtxCount');
+}
+
+async function submitTexts() {
+  const convo = document.getElementById('textsTextarea').value.trim();
+  if (!convo) return;
+
+  if (!STATE.isPro && STATE.freeTexts <= 0) {
+    showPaywall();
+    return;
+  }
+
+  const ctx = document.getElementById('textsContext').value.trim();
+  const btn = document.getElementById('textsBtn');
+  btn.disabled = true;
+  btn.textContent = 'Analyzing...';
+  document.getElementById('textsResults').style.display = 'block';
+  document.getElementById('textsResults').innerHTML = `
+    <div class="card"><div class="skeleton skel-line w80"></div><div class="skeleton skel-line w60"></div></div>
+    <div class="card"><div class="skeleton skel-block"></div></div>
+    <div class="card"><div class="skeleton skel-block"></div></div>
+  `;
+
+  const userMsg = ctx ? `Conversation:\n${convo}\n\nContext: ${ctx}` : `Conversation:\n${convo}`;
+
+  try {
+    const res = await callClaude(TEXT_PROMPT, userMsg);
+    const data = parseClaudeResponse(res);
+    if (!data) throw new Error('Parse failed');
+
+    if (!STATE.isPro) {
+      STATE.freeTexts--;
+    }
+    STATE.textCount++;
+    saveState();
+    document.getElementById('statTexts').textContent = STATE.textCount;
+
+    const interestColors = ['#d44', '#d98', '#dab44c', '#7ab85c', '#4aad4a'];
+    const iLevel = Math.max(1, Math.min(5, data.interestLevel || 3));
+    const iColor = interestColors[iLevel - 1];
+
+    let html = `
+      <div class="card result-section" style="animation:fadeUp .4s ease">
+        <div class="result-label">Vibe Read</div>
+        <p style="font-size:15px;line-height:1.55;color:var(--text)">${escHtml(data.vibeRead)}</p>
+        <div class="interest-bar-wrap">
+          <div class="interest-bar"><div class="interest-fill" style="width:${iLevel * 20}%;background:${iColor}"></div></div>
+          <div class="interest-label"><span>Interest Level: ${iLevel}/5</span><span>${escHtml(data.interestLabel || '')}</span></div>
+        </div>
+      </div>
+    `;
+
+    data.replies.forEach(r => {
+      html += `
+        <div class="card opener-card result-section" style="animation:fadeUp .4s ease">
+          <span class="type-badge">${escHtml(r.style)}</span>
+          <button class="copy-btn" onclick="copyText(this,'${escAttr(r.reply)}')">${COPY_SVG}</button>
+          <p class="opener-text">"${escHtml(r.reply)}"</p>
+          <p class="why">${escHtml(r.why)}</p>
+        </div>
+      `;
+    });
+
+    html += `
+      <div class="card tip-card result-section" style="animation:fadeUp .4s ease">
+        <span class="tip-icon">⏱️</span>
+        <div><div class="result-label" style="margin-bottom:4px">Timing</div><p class="tip-text">${escHtml(data.timingTip)}</p></div>
+      </div>
+    `;
+
+    if (data.flag) {
+      const flagIcon = data.flag.type === 'green' ? '🟢' : '🔴';
+      html += `
+        <div class="card flag-card result-section" style="animation:fadeUp .4s ease">
+          <span class="flag-icon">${flagIcon}</span>
+          <div><div class="result-label" style="margin-bottom:4px">${data.flag.type === 'green' ? 'Green' : 'Red'} Flag</div><p class="flag-text">${escHtml(data.flag.observation)}</p></div>
+        </div>
+      `;
+    }
+
+    html += `<button class="btn-reset" onclick="resetTexts()">New conversation</button>`;
+    document.getElementById('textsResults').innerHTML = html;
+    document.getElementById('textsInput').style.display = 'none';
+  } catch (e) {
+    document.getElementById('textsResults').innerHTML = `
+      <div class="error-state">
+        <p>Something went wrong. Try again.</p>
+        <button onclick="resetTexts()">Try Again</button>
+      </div>
+    `;
+  }
+  btn.disabled = false;
+  btn.textContent = 'Analyze';
+}
+
+function resetTexts() {
+  document.getElementById('textsInput').style.display = 'block';
+  document.getElementById('textsResults').style.display = 'none';
+  document.getElementById('textsResults').innerHTML = '';
+  document.getElementById('textsTextarea').value = '';
+  document.getElementById('textsContext').value = '';
+  document.getElementById('textsCount').textContent = '0/1200';
+  document.getElementById('textsCtxCount').textContent = '0/300';
+}
+
+/* ============ PROFILE ============ */
+function updateProfile() {
+  const name = STATE.userName || '?';
+  document.getElementById('profileMonogram').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('profileName').textContent = name;
+  document.getElementById('profilePlan').textContent = STATE.isPro ? 'Pro Plan' : 'Free Plan';
+  document.getElementById('settingPlan').innerHTML = STATE.isPro ? 'Pro &#10003;' : 'Free — Upgrade &#8250;';
+  document.getElementById('statApproaches').textContent = STATE.approachCount;
+  document.getElementById('statTexts').textContent = STATE.textCount;
+  document.getElementById('statSessions').textContent = STATE.lessonCount;
+}
+
+/* ============ PROGRAMS ============ */
+function renderPrograms() {
+  const grid = document.getElementById('programsGrid');
+  grid.innerHTML = '';
+  PROGRAMS.forEach(p => {
+    const progress = STATE.lessonProgress[p.id] || 0;
+    const pct = (progress / p.sessions) * 100;
+    const div = document.createElement('div');
+    div.className = 'card card-sm program-card';
+    div.onclick = () => openLesson(p.id);
+    div.innerHTML = `
+      <div class="prog-icon">${p.icon}</div>
+      <h4>${p.name}</h4>
+      <p>${progress}/${p.sessions} sessions</p>
+      <div class="prog-progress"><div class="prog-progress-fill" style="width:${pct}%"></div></div>
+    `;
+    grid.appendChild(div);
+  });
+}
+
+/* ============ LESSON OVERLAY ============ */
+function openLesson(topicId) {
+  const prog = PROGRAMS.find(p => p.id === topicId);
+  if (!prog) return;
+
+  const progress = STATE.lessonProgress[topicId] || 0;
+  if (progress >= prog.sessions) {
+    // Completed — restart or show done
+    STATE.lessonProgress[topicId] = 0;
+    saveState();
+    renderPrograms();
+  }
+  const sessionNum = (STATE.lessonProgress[topicId] || 0) + 1;
+
+  STATE.currentTopic = topicId;
+  STATE.currentLesson = sessionNum;
+
+  document.getElementById('lessonTopic').textContent = prog.name;
+  document.getElementById('lessonSession').textContent = `Session ${sessionNum} of ${prog.sessions}`;
+  document.getElementById('lessonBody').innerHTML = '<div class="spinner"></div>';
+  document.getElementById('lessonNextBtn').textContent = sessionNum >= prog.sessions ? 'Done' : 'Next Session';
+  document.getElementById('lessonOverlay').classList.add('active');
+
+  loadLessonContent(prog.name, sessionNum);
+}
+
+async function loadLessonContent(topicName, sessionNum) {
+  try {
+    const res = await callClaude(
+      MINDSET_PROMPT,
+      `Topic: ${topicName}. This is session ${sessionNum} of 5. Give a focused lesson on this specific aspect of ${topicName} for men building social confidence. Make it progressive — session ${sessionNum} should build on previous sessions.`
+    );
+    const data = parseClaudeResponse(res);
+    if (!data) throw new Error('Parse failed');
+
+    document.getElementById('lessonBody').innerHTML = `
+      <h2 class="lesson-title">${escHtml(data.title)}</h2>
+      <p class="lesson-text">${escHtml(data.lesson)}</p>
+      <div class="lesson-takeaway">
+        <div class="lt-label">Key Takeaway</div>
+        <p class="lt-text">${escHtml(data.keyTakeaway)}</p>
+      </div>
+      <div class="lesson-challenge">
+        <div class="lc-label">Daily Challenge</div>
+        <p class="lc-text">${escHtml(data.dailyChallenge)}</p>
+      </div>
+    `;
+  } catch (e) {
+    document.getElementById('lessonBody').innerHTML = `
+      <div class="error-state">
+        <p>Couldn't load lesson. Check your connection.</p>
+        <button onclick="loadLessonContent('${topicName}',${sessionNum})">Retry</button>
+      </div>
+    `;
+  }
+}
+
+function nextLesson() {
+  const topicId = STATE.currentTopic;
+  const prog = PROGRAMS.find(p => p.id === topicId);
+  if (!prog) return;
+
+  // Mark current session complete
+  STATE.lessonProgress[topicId] = STATE.currentLesson;
+  STATE.lessonCount++;
+  saveState();
+  updateProfile();
+  renderPrograms();
+
+  if (STATE.currentLesson >= prog.sessions) {
+    closeLesson();
+    return;
+  }
+
+  // Load next
+  const next = STATE.currentLesson + 1;
+  STATE.currentLesson = next;
+  document.getElementById('lessonSession').textContent = `Session ${next} of ${prog.sessions}`;
+  document.getElementById('lessonNextBtn').textContent = next >= prog.sessions ? 'Done' : 'Next Session';
+  document.getElementById('lessonBody').innerHTML = '<div class="spinner"></div>';
+  loadLessonContent(prog.name, next);
+}
+
+function closeLesson() {
+  document.getElementById('lessonOverlay').classList.remove('active');
+}
+
+/* ============ PAYWALL ============ */
+function showPaywall() {
+  document.getElementById('paywall').classList.add('active');
+}
+
+function closePaywall() {
+  document.getElementById('paywall').classList.remove('active');
+}
+
+function selectPlan(el) {
+  document.querySelectorAll('.pw-plan').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function startPro() {
+  // In production this would trigger IAP via Median.co
+  // For now simulate upgrade
+  STATE.isPro = true;
+  localStorage.setItem('ap_pro', '1');
+  saveState();
+  updateProfile();
+  updateUsage();
+  closePaywall();
+}
+
+/* ============ COPY ============ */
+function copyText(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#5a7a6e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    setTimeout(() => { btn.innerHTML = COPY_SVG; }, 1500);
+  }).catch(() => {});
+}
+
+/* ============ STATE PERSISTENCE ============ */
+function saveState() {
+  localStorage.setItem('ap_state', JSON.stringify({
+    approachCount: STATE.approachCount,
+    textCount: STATE.textCount,
+    lessonCount: STATE.lessonCount,
+    isPro: STATE.isPro,
+    freeApproaches: STATE.freeApproaches,
+    freeTexts: STATE.freeTexts,
+    userName: STATE.userName,
+    userGoal: STATE.userGoal,
+    userAge: STATE.userAge,
+    userEmail: STATE.userEmail,
+    lessonProgress: STATE.lessonProgress
+  }));
+}
+
+function loadState() {
+  const saved = localStorage.getItem('ap_state');
+  if (saved) {
+    try {
+      const s = JSON.parse(saved);
+      Object.assign(STATE, s);
+    } catch (e) {}
+  }
+  if (localStorage.getItem('ap_pro') === '1') STATE.isPro = true;
+  if (localStorage.getItem('ap_name')) STATE.userName = localStorage.getItem('ap_name');
+}
+
+/* ============ UTILS ============ */
+function escHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function escAttr(str) {
+  if (!str) return '';
+  return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n');
+}
 </script>
 </body>
 </html>
