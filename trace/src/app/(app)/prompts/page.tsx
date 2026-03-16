@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useBrand } from "@/lib/context/BrandContext";
 import {
   getSampleTopics,
   getSamplePrompts,
@@ -25,9 +26,38 @@ const SENTIMENT_COLOR: Record<string, string> = {
 };
 
 export default function PromptsPage() {
-  const topics = getSampleTopics();
-  const prompts = getSamplePrompts();
-  const results = useMemo(() => getSampleAnalysisResults(), []);
+  const brand = useBrand();
+  const hasReal = brand.hasRealData;
+
+  // Use real or sample data
+  const topics = useMemo(() => {
+    if (hasReal) {
+      return brand.topics.map((t) => ({
+        id: t.id,
+        name: t.name,
+        promptCount: brand.prompts.filter((p) => p.topic_id === t.id).length,
+      }));
+    }
+    return getSampleTopics();
+  }, [hasReal, brand.topics, brand.prompts]);
+
+  const prompts = useMemo(() => {
+    if (hasReal) {
+      return brand.prompts.map((p) => ({
+        id: p.id,
+        topicId: p.topic_id ?? "",
+        text: p.prompt_text,
+        estimatedVolume: p.estimated_volume,
+        tags: p.tags,
+      }));
+    }
+    return getSamplePrompts();
+  }, [hasReal, brand.prompts]);
+
+  const results = useMemo(() => {
+    if (hasReal) return brand.results;
+    return getSampleAnalysisResults();
+  }, [hasReal, brand.results]);
 
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
@@ -36,7 +66,6 @@ export default function PromptsPage() {
     ? prompts.filter((p) => p.topicId === selectedTopic)
     : prompts;
 
-  // Summary stats
   const totalPrompts = prompts.length;
   const totalResults = results.length;
   const mentionedCount = results.filter((r) => r.brand_mentioned).length;
@@ -44,24 +73,23 @@ export default function PromptsPage() {
     totalResults > 0
       ? Math.round((mentionedCount / totalResults) * 1000) / 10
       : 0;
-  const activePrompts = prompts.length; // all active in sample
 
   function getPromptResults(promptId: string) {
     return results.filter((r) => r.prompt_id === promptId);
   }
 
   function getPromptStatus(promptId: string) {
-    const promptResults = getPromptResults(promptId);
-    if (promptResults.length === 0) return { label: "Pending", color: "gray" };
-    const mentioned = promptResults.filter((r) => r.brand_mentioned).length;
-    const rate = mentioned / promptResults.length;
+    const pr = getPromptResults(promptId);
+    if (pr.length === 0) return { label: "Pending", color: "gray" };
+    const mentioned = pr.filter((r) => r.brand_mentioned).length;
+    const rate = mentioned / pr.length;
     if (rate >= 0.7) return { label: "Strong", color: "green" };
     if (rate >= 0.4) return { label: "Moderate", color: "orange" };
     return { label: "Weak", color: "red" };
   }
 
   function getTopicName(topicId: string) {
-    return topics.find((t) => t.id === topicId)?.name ?? "Unknown";
+    return topics.find((t) => t.id === topicId)?.name ?? "—";
   }
 
   return (
@@ -73,25 +101,21 @@ export default function PromptsPage() {
         </p>
       </div>
 
-      <div className="mb-4">
-        <Callout type="info">
-          You are viewing sample data for Nespresso. Connect your brand to see
-          real results.
-        </Callout>
-      </div>
+      {!hasReal && (
+        <div className="mb-4">
+          <Callout type="info">
+            Showing sample data. Add a brand and run analysis to see real results.
+          </Callout>
+        </div>
+      )}
 
-      {/* Summary metrics */}
       <div className="flex gap-3 mb-5 flex-wrap">
         <Metric label="Total Prompts" value={String(totalPrompts)} />
-        <Metric label="Active" value={String(activePrompts)} />
-        <Metric
-          label="Brand Presence"
-          value={`${brandPresence}%`}
-          change="+3.2%"
-        />
+        <Metric label="Active" value={String(totalPrompts)} />
+        <Metric label="Brand Presence" value={`${brandPresence}%`} />
         <Metric
           label="Avg. Results / Prompt"
-          value={String(Math.round(totalResults / totalPrompts))}
+          value={totalPrompts > 0 ? String(Math.round(totalResults / totalPrompts)) : "0"}
         />
       </div>
 
@@ -152,9 +176,6 @@ export default function PromptsPage() {
                   <th className="text-center text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium px-3 py-2.5">
                     Status
                   </th>
-                  <th className="text-right text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium px-3 py-2.5">
-                    Last Run
-                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -194,22 +215,11 @@ function PromptRow({
   promptResults,
   onToggle,
 }: {
-  prompt: {
-    id: string;
-    text: string;
-    topicId: string;
-    estimatedVolume: number;
-    tags: string[];
-  };
+  prompt: { id: string; text: string; topicId: string; estimatedVolume: number; tags: string[] };
   topicName: string;
   status: { label: string; color: string };
   isExpanded: boolean;
-  promptResults: {
-    llm_model: string;
-    brand_mentioned: boolean;
-    brand_position: number | null;
-    sentiment: string;
-  }[];
+  promptResults: { llm_model: string; brand_mentioned: boolean; brand_position: number | null; sentiment: string | null }[];
   onToggle: () => void;
 }) {
   return (
@@ -229,11 +239,7 @@ function PromptRow({
               stroke="currentColor"
               strokeWidth={2}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 5l7 7-7 7"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
             <span className="text-[#2D3B42] truncate">{prompt.text}</span>
           </div>
@@ -245,13 +251,10 @@ function PromptRow({
         <td className="px-3 py-2.5 text-center">
           <Tag label={status.label} color={status.color} small />
         </td>
-        <td className="px-3 py-2.5 text-right text-[#8A9BA3] text-[12px]">
-          Mar 14, 2026
-        </td>
       </tr>
       {isExpanded && (
         <tr className="border-b border-[#E8EAEB]">
-          <td colSpan={5} className="bg-[#F8F9FA] px-3 py-3">
+          <td colSpan={4} className="bg-[#F8F9FA] px-3 py-3">
             <div className="pl-5">
               <div className="text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium mb-2">
                 Model-by-model results
@@ -283,7 +286,7 @@ function PromptRow({
                     <div className="mt-1">
                       <Tag
                         label={r.sentiment ?? "N/A"}
-                        color={SENTIMENT_COLOR[r.sentiment] ?? "gray"}
+                        color={SENTIMENT_COLOR[r.sentiment ?? ""] ?? "gray"}
                         small
                       />
                     </div>

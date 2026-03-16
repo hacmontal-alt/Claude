@@ -20,6 +20,7 @@ import {
   Tag,
   ChevronDown,
   ChevronRight,
+  Swords,
 } from "lucide-react";
 import BrandSwitcher from "./BrandSwitcher";
 
@@ -121,6 +122,7 @@ export default function Sidebar() {
         <NavItem icon={<LayoutGrid size={sz} />} label="Overview" href="/overview" active={isActive("/overview")} onClick={nav("/overview")} />
         <NavItem icon={<Clock size={sz} />} label="Prompts" href="/prompts" badge="82" active={isActive("/prompts")} onClick={nav("/prompts")} />
         <NavItem icon={<Link2 size={sz} />} label="Sources" href="/sources" active={isActive("/sources")} onClick={nav("/sources")} />
+        <NavItem icon={<Swords size={sz} />} label="Competitors" href="/competitors" active={isActive("/competitors")} onClick={nav("/competitors")} />
         <NavItem icon={<TrendingUp size={sz} />} label="Impact" href="/impact" active={isActive("/impact")} onClick={nav("/impact")} disabled />
 
         <SectionLabel label="Actions" />

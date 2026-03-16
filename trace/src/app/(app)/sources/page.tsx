@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useBrand } from "@/lib/context/BrandContext";
 import { getSampleSources } from "@/lib/utils/sample-data";
 import Callout from "@/components/ui/Callout";
 import Tag from "@/components/ui/Tag";
@@ -18,7 +19,39 @@ const CONTENT_TYPE_COLOR: Record<string, string> = {
 };
 
 export default function SourcesPage() {
-  const sources = useMemo(() => getSampleSources(), []);
+  const { hasRealData, sources: rawSources } = useBrand();
+
+  const sources = useMemo(() => {
+    if (!hasRealData) return getSampleSources();
+
+    // Aggregate raw sources by domain
+    const domainMap = new Map<
+      string,
+      { type: string; count: number; citations: number; owned: boolean }
+    >();
+    for (const s of rawSources) {
+      const existing = domainMap.get(s.domain) || {
+        type: s.content_type ?? "unknown",
+        count: 0,
+        citations: 0,
+        owned: s.is_brand_owned,
+      };
+      existing.count++;
+      existing.citations += s.citation_count;
+      domainMap.set(s.domain, existing);
+    }
+
+    return Array.from(domainMap.entries())
+      .map(([domain, data]) => ({
+        domain,
+        contentType: data.type,
+        isBrandOwned: data.owned,
+        frequency: data.count,
+        totalCitations: data.citations,
+        avgCitations: Math.round((data.citations / data.count) * 10) / 10,
+      }))
+      .sort((a, b) => b.frequency - a.frequency);
+  }, [hasRealData, rawSources]);
 
   const totalSources = sources.length;
   const brandOwned = sources.filter((s) => s.isBrandOwned).length;
@@ -30,7 +63,6 @@ export default function SourcesPage() {
     totalCitations > 0
       ? Math.round((brandCitations / totalCitations) * 1000) / 10
       : 0;
-  const topDomain = sources[0]?.domain ?? "N/A";
 
   return (
     <div className="max-w-[1200px] mx-auto">
@@ -41,26 +73,21 @@ export default function SourcesPage() {
         </p>
       </div>
 
-      <div className="mb-4">
-        <Callout type="info">
-          You are viewing sample data for Nespresso. Connect your brand to see
-          real results.
-        </Callout>
-      </div>
+      {!hasRealData && (
+        <div className="mb-4">
+          <Callout type="info">
+            Showing sample data. Run analysis to see real cited sources.
+          </Callout>
+        </div>
+      )}
 
-      {/* Summary metrics */}
       <div className="flex gap-3 mb-5 flex-wrap">
         <Metric label="Total Sources" value={String(totalSources)} />
         <Metric label="Brand Owned" value={String(brandOwned)} />
-        <Metric
-          label="Brand Citation Rate"
-          value={`${citationRate}%`}
-          change="+1.8%"
-        />
-        <Metric label="Top Domain" value={topDomain} />
+        <Metric label="Brand Citation Rate" value={`${citationRate}%`} />
+        <Metric label="Top Domain" value={sources[0]?.domain ?? "N/A"} />
       </div>
 
-      {/* Sources table */}
       <div className="bg-white border border-[#E8EAEB] rounded-lg overflow-hidden">
         <table className="w-full text-[13px]">
           <thead>
@@ -77,93 +104,52 @@ export default function SourcesPage() {
               <th className="text-center text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium px-3 py-2.5">
                 Brand Owned
               </th>
-              <th className="text-right text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium px-3 py-2.5">
-                Trend
-              </th>
             </tr>
           </thead>
           <tbody>
-            {sources.map((source) => {
-              const trendValue = getTrend(source.domain);
-              const isPositive = trendValue.startsWith("+");
-
-              return (
-                <tr
-                  key={source.domain}
-                  className="border-b border-[#E8EAEB] hover:bg-[#F8F9FA] transition"
-                >
-                  <td className="px-3 py-2.5">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`w-2 h-2 rounded-full shrink-0 ${
-                          source.isBrandOwned
-                            ? "bg-[#EF4623]"
-                            : "bg-[#E8EAEB]"
-                        }`}
-                      />
-                      <span className="text-[#2D3B42] font-medium">
-                        {source.domain}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-3 py-2.5 text-right text-[#4A5D66] tabular-nums">
-                    {source.totalCitations}
-                  </td>
-                  <td className="px-3 py-2.5 text-center">
-                    <Tag
-                      label={source.contentType}
-                      color={
-                        CONTENT_TYPE_COLOR[source.contentType] ?? "gray"
-                      }
-                      small
-                    />
-                  </td>
-                  <td className="px-3 py-2.5 text-center">
-                    {source.isBrandOwned ? (
-                      <span className="inline-flex items-center justify-center w-5 h-5 bg-[#ECFDF5] rounded-full">
-                        <svg
-                          className="w-3 h-3 text-[#059669]"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={3}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      </span>
-                    ) : (
-                      <span className="text-[#8A9BA3]">&mdash;</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2.5 text-right">
-                    <span
-                      className={`text-[11px] font-semibold ${
-                        isPositive ? "text-[#047857]" : "text-[#DC2626]"
+            {sources.map((source) => (
+              <tr
+                key={source.domain}
+                className="border-b border-[#E8EAEB] hover:bg-[#F8F9FA] transition"
+              >
+                <td className="px-3 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`w-2 h-2 rounded-full shrink-0 ${
+                        source.isBrandOwned ? "bg-[#EF4623]" : "bg-[#E8EAEB]"
                       }`}
-                    >
-                      {trendValue}
+                    />
+                    <span className="text-[#2D3B42] font-medium">
+                      {source.domain}
                     </span>
-                  </td>
-                </tr>
-              );
-            })}
+                  </div>
+                </td>
+                <td className="px-3 py-2.5 text-right text-[#4A5D66] tabular-nums">
+                  {source.totalCitations}
+                </td>
+                <td className="px-3 py-2.5 text-center">
+                  <Tag
+                    label={source.contentType}
+                    color={CONTENT_TYPE_COLOR[source.contentType] ?? "gray"}
+                    small
+                  />
+                </td>
+                <td className="px-3 py-2.5 text-center">
+                  {source.isBrandOwned ? (
+                    <span className="inline-flex items-center justify-center w-5 h-5 bg-[#ECFDF5] rounded-full">
+                      <svg className="w-3 h-3 text-[#059669]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </span>
+                  ) : (
+                    <span className="text-[#8A9BA3]">&mdash;</span>
+                  )}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
     </div>
   );
-}
-
-/** Deterministic pseudo-trend per domain for sample data display. */
-function getTrend(domain: string): string {
-  let hash = 0;
-  for (let i = 0; i < domain.length; i++) {
-    hash = (hash * 31 + domain.charCodeAt(i)) | 0;
-  }
-  const abs = Math.abs(hash % 40) / 10;
-  return hash % 3 === 0 ? `-${abs.toFixed(1)}%` : `+${abs.toFixed(1)}%`;
 }
