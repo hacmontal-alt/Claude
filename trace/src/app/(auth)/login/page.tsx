@@ -30,7 +30,17 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/dashboard");
+      // Check if user has completed onboarding (has a brand)
+      const { data: brands } = await supabase
+        .from('brands')
+        .select('id')
+        .limit(1);
+
+      if (brands && brands.length > 0) {
+        router.push("/dashboard");
+      } else {
+        router.push("/onboarding");
+      }
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);
