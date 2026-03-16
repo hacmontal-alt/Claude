@@ -34,7 +34,7 @@ export async function updateSession(request: NextRequest) {
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup');
   const isOnboarding = request.nextUrl.pathname.startsWith('/onboarding') || request.nextUrl.pathname.startsWith('/dashboard');
-  const isAppPage = request.nextUrl.pathname.startsWith('/overview') || request.nextUrl.pathname.startsWith('/prompts') || request.nextUrl.pathname.startsWith('/sources') || request.nextUrl.pathname.startsWith('/opportunities') || request.nextUrl.pathname.startsWith('/content') || request.nextUrl.pathname.startsWith('/earned') || request.nextUrl.pathname.startsWith('/impact') || request.nextUrl.pathname.startsWith('/research') || request.nextUrl.pathname.startsWith('/settings');
+  const isAppPage = request.nextUrl.pathname.startsWith('/overview') || request.nextUrl.pathname.startsWith('/prompts') || request.nextUrl.pathname.startsWith('/sources') || request.nextUrl.pathname.startsWith('/competitors') || request.nextUrl.pathname.startsWith('/opportunities') || request.nextUrl.pathname.startsWith('/content') || request.nextUrl.pathname.startsWith('/earned') || request.nextUrl.pathname.startsWith('/impact') || request.nextUrl.pathname.startsWith('/research') || request.nextUrl.pathname.startsWith('/settings');
   const isPublicPage = request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/agency-directory');
 
   // Allow onboarding and dashboard without auth (for demo/trial flow)

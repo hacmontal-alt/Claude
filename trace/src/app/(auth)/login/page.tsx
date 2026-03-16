@@ -37,7 +37,7 @@ export default function LoginPage() {
         .limit(1);
 
       if (brands && brands.length > 0) {
-        router.push("/dashboard");
+        router.push("/overview");
       } else {
         router.push("/onboarding");
       }
@@ -51,7 +51,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${window.location.origin}/overview`,
       },
     });
     if (error) {
