@@ -2,8 +2,6 @@
 
 import { useMemo } from "react";
 import { useBrand } from "@/lib/context/BrandContext";
-import { getSampleOpportunities } from "@/lib/utils/sample-data";
-import Callout from "@/components/ui/Callout";
 import Metric from "@/components/ui/Metric";
 import Tag from "@/components/ui/Tag";
 
@@ -30,10 +28,10 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 export default function OpportunitiesPage() {
-  const { hasRealData, results, prompts, sources, activeBrand } = useBrand();
+  const { hasBrand, hasRealData, results, prompts, sources, activeBrand, triggerAnalysis } = useBrand();
 
   const opportunities = useMemo(() => {
-    if (!hasRealData) return getSampleOpportunities();
+    if (!hasRealData) return [];
 
     const opps: {
       id: string;
@@ -46,7 +44,6 @@ export default function OpportunitiesPage() {
       estimatedImpact: number | null;
     }[] = [];
 
-    // Find prompts where brand is NOT mentioned
     const promptGroups = new Map<
       string,
       { mentioned: string[]; notMentioned: string[]; volume: number; text: string }
@@ -71,7 +68,6 @@ export default function OpportunitiesPage() {
 
     let idx = 0;
     for (const [promptId, group] of promptGroups) {
-      // Missing presence
       if (group.notMentioned.length >= 3) {
         idx++;
         opps.push({
@@ -86,7 +82,6 @@ export default function OpportunitiesPage() {
         });
       }
 
-      // Low position
       const lowPosResults = results.filter(
         (r) =>
           r.prompt_id === promptId &&
@@ -108,7 +103,6 @@ export default function OpportunitiesPage() {
         });
       }
 
-      // Negative sentiment
       const negResults = results.filter(
         (r) =>
           r.prompt_id === promptId &&
@@ -130,7 +124,6 @@ export default function OpportunitiesPage() {
       }
     }
 
-    // Sort by severity then impact
     const severityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
     return opps.sort(
       (a, b) =>
@@ -138,6 +131,41 @@ export default function OpportunitiesPage() {
         (b.estimatedImpact ?? 0) - (a.estimatedImpact ?? 0)
     );
   }, [hasRealData, results, prompts, sources, activeBrand]);
+
+  if (!hasBrand) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <p className="text-[#8A9BA3] text-sm mb-4">Add a brand to discover opportunities.</p>
+        <a href="/onboarding/step-1" className="px-6 py-3 bg-[#EF4623] text-white rounded-lg text-sm font-semibold">
+          Add your first brand
+        </a>
+      </div>
+    );
+  }
+
+  if (!hasRealData) {
+    return (
+      <div className="max-w-[1200px] mx-auto">
+        <div className="mb-5">
+          <h1 className="text-xl font-bold text-[#2D3B42]">Opportunities</h1>
+          <p className="text-[13px] text-[#8A9BA3] mt-0.5">
+            Visibility gaps and improvement opportunities for {activeBrand?.brand_name ?? "your brand"}.
+          </p>
+        </div>
+        <div className="bg-white border border-[#E8EAEB] rounded-xl p-8 text-center">
+          <p className="text-[#8A9BA3] text-sm mb-4">
+            Run an analysis to discover visibility gaps and opportunities.
+          </p>
+          <button
+            onClick={() => triggerAnalysis()}
+            className="px-6 py-3 bg-[#EF4623] text-white rounded-lg text-sm font-semibold hover:bg-[#d93d1e] transition"
+          >
+            Run analysis
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const highCount = opportunities.filter((o) => o.severity === "high").length;
   const totalImpact = opportunities.reduce(
@@ -150,17 +178,9 @@ export default function OpportunitiesPage() {
       <div className="mb-5">
         <h1 className="text-xl font-bold text-[#2D3B42]">Opportunities</h1>
         <p className="text-[13px] text-[#8A9BA3] mt-0.5">
-          Visibility gaps and improvement opportunities for your brand.
+          Visibility gaps and improvement opportunities for {activeBrand?.brand_name ?? "your brand"}.
         </p>
       </div>
-
-      {!hasRealData && (
-        <div className="mb-4">
-          <Callout type="info">
-            Showing sample data. Run analysis to discover real opportunities.
-          </Callout>
-        </div>
-      )}
 
       <div className="flex gap-3 mb-5 flex-wrap">
         <Metric label="Opportunities" value={String(opportunities.length)} />
@@ -219,7 +239,7 @@ export default function OpportunitiesPage() {
 
         {opportunities.length === 0 && (
           <div className="text-center py-12 text-[#8A9BA3] text-sm">
-            No opportunities found. Run an analysis first.
+            No major opportunities found. Your brand visibility looks solid!
           </div>
         )}
       </div>

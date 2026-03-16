@@ -95,6 +95,7 @@ interface BrandContextValue {
   // State
   loading: boolean;
   analyzing: boolean;
+  hasBrand: boolean;
   hasRealData: boolean;
 
   // Actions
@@ -124,6 +125,7 @@ export function BrandProvider({ children }: { children: ReactNode }) {
   const [analyzing, setAnalyzing] = useState(false);
 
   const activeBrand = brands.find((b) => b.id === activeBrandId) ?? null;
+  const hasBrand = activeBrand !== null;
   const hasRealData = results.length > 0;
 
   // Load brands on mount
@@ -236,6 +238,7 @@ export function BrandProvider({ children }: { children: ReactNode }) {
         sources,
         loading,
         analyzing,
+        hasBrand,
         hasRealData,
         setActiveBrandId,
         refresh,

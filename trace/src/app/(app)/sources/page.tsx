@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { useBrand } from "@/lib/context/BrandContext";
-import { getSampleSources } from "@/lib/utils/sample-data";
 import Callout from "@/components/ui/Callout";
 import Tag from "@/components/ui/Tag";
 import Metric from "@/components/ui/Metric";
@@ -19,12 +18,11 @@ const CONTENT_TYPE_COLOR: Record<string, string> = {
 };
 
 export default function SourcesPage() {
-  const { hasRealData, sources: rawSources } = useBrand();
+  const { hasBrand, hasRealData, sources: rawSources, activeBrand, triggerAnalysis } = useBrand();
 
   const sources = useMemo(() => {
-    if (!hasRealData) return getSampleSources();
+    if (!hasRealData) return [];
 
-    // Aggregate raw sources by domain
     const domainMap = new Map<
       string,
       { type: string; count: number; citations: number; owned: boolean }
@@ -53,6 +51,41 @@ export default function SourcesPage() {
       .sort((a, b) => b.frequency - a.frequency);
   }, [hasRealData, rawSources]);
 
+  if (!hasBrand) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <p className="text-[#8A9BA3] text-sm mb-4">Add a brand to see cited sources.</p>
+        <a href="/onboarding/step-1" className="px-6 py-3 bg-[#EF4623] text-white rounded-lg text-sm font-semibold">
+          Add your first brand
+        </a>
+      </div>
+    );
+  }
+
+  if (!hasRealData) {
+    return (
+      <div className="max-w-[1200px] mx-auto">
+        <div className="mb-5">
+          <h1 className="text-xl font-bold text-[#2D3B42]">Sources</h1>
+          <p className="text-[13px] text-[#8A9BA3] mt-0.5">
+            Domains and pages cited by AI models in responses about {activeBrand?.brand_name ?? "your brand"}.
+          </p>
+        </div>
+        <div className="bg-white border border-[#E8EAEB] rounded-xl p-8 text-center">
+          <p className="text-[#8A9BA3] text-sm mb-4">
+            Run an analysis to discover which sources AI models cite when discussing your brand.
+          </p>
+          <button
+            onClick={() => triggerAnalysis()}
+            className="px-6 py-3 bg-[#EF4623] text-white rounded-lg text-sm font-semibold hover:bg-[#d93d1e] transition"
+          >
+            Run analysis
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const totalSources = sources.length;
   const brandOwned = sources.filter((s) => s.isBrandOwned).length;
   const totalCitations = sources.reduce((a, s) => a + s.totalCitations, 0);
@@ -69,17 +102,9 @@ export default function SourcesPage() {
       <div className="mb-5">
         <h1 className="text-xl font-bold text-[#2D3B42]">Sources</h1>
         <p className="text-[13px] text-[#8A9BA3] mt-0.5">
-          Domains and pages cited by AI models in responses about your brand.
+          Domains and pages cited by AI models in responses about {activeBrand?.brand_name ?? "your brand"}.
         </p>
       </div>
-
-      {!hasRealData && (
-        <div className="mb-4">
-          <Callout type="info">
-            Showing sample data. Run analysis to see real cited sources.
-          </Callout>
-        </div>
-      )}
 
       <div className="flex gap-3 mb-5 flex-wrap">
         <Metric label="Total Sources" value={String(totalSources)} />

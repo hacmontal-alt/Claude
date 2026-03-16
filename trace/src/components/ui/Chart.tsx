@@ -23,7 +23,7 @@ export default function Chart({ data, color = "#EF4623", height = 160 }: ChartPr
         <YAxis tick={{ fontSize: 10, fill: "#8A9BA3" }} axisLine={false} tickLine={false} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
         <Tooltip
           contentStyle={{ fontSize: 11, border: "1px solid #E8EAEB", borderRadius: 6, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}
-          formatter={(value: number) => [`${value}%`, "Visibility"]}
+          formatter={(value) => [`${value}%`, "Visibility"]}
         />
         <Area
           type="monotone"

@@ -2,15 +2,14 @@
 
 import { useMemo } from "react";
 import { useBrand } from "@/lib/context/BrandContext";
-import Callout from "@/components/ui/Callout";
 import Metric from "@/components/ui/Metric";
 import Tag from "@/components/ui/Tag";
 
 export default function ContentPage() {
-  const { hasRealData, results, prompts, sources, activeBrand, competitors } = useBrand();
+  const { hasBrand, hasRealData, results, prompts, sources, activeBrand, competitors, triggerAnalysis } = useBrand();
 
   const recommendations = useMemo(() => {
-    if (!hasRealData) return getSampleRecommendations();
+    if (!hasRealData) return [];
 
     const recs: {
       type: string;
@@ -20,7 +19,6 @@ export default function ContentPage() {
       affectedPrompts: string[];
     }[] = [];
 
-    // Find prompts where brand is NOT mentioned — need content
     const promptMentionMap = new Map<string, { mentioned: number; total: number }>();
     for (const r of results) {
       const existing = promptMentionMap.get(r.prompt_id) || { mentioned: 0, total: 0 };
@@ -29,7 +27,6 @@ export default function ContentPage() {
       promptMentionMap.set(r.prompt_id, existing);
     }
 
-    // Content gap: prompts with low mention rate
     const weakPrompts = prompts.filter((p) => {
       const stats = promptMentionMap.get(p.id);
       if (!stats || stats.total === 0) return true;
@@ -46,7 +43,6 @@ export default function ContentPage() {
       });
     }
 
-    // Source gap: brand domain barely cited
     const brandSources = sources.filter((s) => s.is_brand_owned);
     const totalCitations = sources.reduce((a, s) => a + s.citation_count, 0);
     const brandCitations = brandSources.reduce((a, s) => a + s.citation_count, 0);
@@ -60,7 +56,6 @@ export default function ContentPage() {
       });
     }
 
-    // Competitor content: where competitors are mentioned more
     for (const comp of competitors) {
       let compMentions = 0;
       for (const r of results) {
@@ -87,7 +82,6 @@ export default function ContentPage() {
       }
     }
 
-    // Negative sentiment content
     const negativeResults = results.filter(
       (r) => r.brand_mentioned && r.sentiment === "negative"
     );
@@ -120,22 +114,49 @@ export default function ContentPage() {
     sentiment_fix: "Sentiment",
   };
 
+  if (!hasBrand) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <p className="text-[#8A9BA3] text-sm mb-4">Add a brand to get content recommendations.</p>
+        <a href="/onboarding/step-1" className="px-6 py-3 bg-[#EF4623] text-white rounded-lg text-sm font-semibold">
+          Add your first brand
+        </a>
+      </div>
+    );
+  }
+
+  if (!hasRealData) {
+    return (
+      <div className="max-w-[1200px] mx-auto">
+        <div className="mb-5">
+          <h1 className="text-xl font-bold text-[#2D3B42]">Content Recommendations</h1>
+          <p className="text-[13px] text-[#8A9BA3] mt-0.5">
+            Actionable content suggestions to improve {activeBrand?.brand_name ?? "your brand"}&apos;s AI visibility.
+          </p>
+        </div>
+        <div className="bg-white border border-[#E8EAEB] rounded-xl p-8 text-center">
+          <p className="text-[#8A9BA3] text-sm mb-4">
+            Run an analysis first to get personalized content recommendations.
+          </p>
+          <button
+            onClick={() => triggerAnalysis()}
+            className="px-6 py-3 bg-[#EF4623] text-white rounded-lg text-sm font-semibold hover:bg-[#d93d1e] transition"
+          >
+            Run analysis
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-[1200px] mx-auto">
       <div className="mb-5">
         <h1 className="text-xl font-bold text-[#2D3B42]">Content Recommendations</h1>
         <p className="text-[13px] text-[#8A9BA3] mt-0.5">
-          Actionable content suggestions to improve your AI visibility.
+          Actionable content suggestions to improve {activeBrand?.brand_name ?? "your brand"}&apos;s AI visibility.
         </p>
       </div>
-
-      {!hasRealData && (
-        <div className="mb-4">
-          <Callout type="info">
-            Showing sample recommendations. Run analysis to get personalized suggestions.
-          </Callout>
-        </div>
-      )}
 
       <div className="flex gap-3 mb-5 flex-wrap">
         <Metric label="Recommendations" value={String(recommendations.length)} />
@@ -188,62 +209,13 @@ export default function ContentPage() {
             )}
           </div>
         ))}
+
+        {recommendations.length === 0 && (
+          <div className="text-center py-12 text-[#8A9BA3] text-sm">
+            No recommendations at this time. Your brand visibility looks good!
+          </div>
+        )}
       </div>
     </div>
   );
-}
-
-function getSampleRecommendations() {
-  return [
-    {
-      type: "content_gap",
-      priority: "high",
-      title: "Create content for \"cheapest espresso at home\" queries",
-      description:
-        "Nespresso is rarely mentioned when users ask about affordable espresso. A cost-per-cup comparison page could help AI models include Nespresso in value-focused answers.",
-      affectedPrompts: [
-        "Cheapest way to make espresso at home",
-        "Best espresso machine under $300",
-      ],
-    },
-    {
-      type: "citation_gap",
-      priority: "high",
-      title: "Build authoritative product comparison pages",
-      description:
-        "Only 12% of citations point to nespresso.com. AI models prefer third-party review sites. Create detailed, factual comparison pages on your own domain.",
-      affectedPrompts: [],
-    },
-    {
-      type: "competitor_content",
-      priority: "medium",
-      title: "Create Nespresso vs Keurig comparison content",
-      description:
-        "Keurig is mentioned 45% of the time. A balanced, detailed comparison page helps AI models accurately position your brand.",
-      affectedPrompts: [
-        "Nespresso vs Keurig which one should I buy?",
-      ],
-    },
-    {
-      type: "sentiment_fix",
-      priority: "medium",
-      title: "Address sustainability concerns with content",
-      description:
-        "AI models mention environmental concerns about aluminum capsules. Publish content about your recycling program and B Corp certification.",
-      affectedPrompts: [
-        "Are coffee pods bad for the environment?",
-        "Is Nespresso sustainable?",
-      ],
-    },
-    {
-      type: "content_gap",
-      priority: "low",
-      title: "Create eco-friendly brand positioning content",
-      description:
-        "Your brand is absent from \"eco-friendly coffee machine\" queries despite your sustainability programs.",
-      affectedPrompts: [
-        "Most eco-friendly coffee machine brands",
-      ],
-    },
-  ];
 }

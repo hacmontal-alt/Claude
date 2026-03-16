@@ -2,11 +2,6 @@
 
 import { useState, useMemo } from "react";
 import { useBrand } from "@/lib/context/BrandContext";
-import {
-  getSampleTopics,
-  getSamplePrompts,
-  getSampleAnalysisResults,
-} from "@/lib/utils/sample-data";
 import Callout from "@/components/ui/Callout";
 import Tag from "@/components/ui/Tag";
 import Metric from "@/components/ui/Metric";
@@ -27,37 +22,26 @@ const SENTIMENT_COLOR: Record<string, string> = {
 
 export default function PromptsPage() {
   const brand = useBrand();
-  const hasReal = brand.hasRealData;
 
-  // Use real or sample data
   const topics = useMemo(() => {
-    if (hasReal) {
-      return brand.topics.map((t) => ({
-        id: t.id,
-        name: t.name,
-        promptCount: brand.prompts.filter((p) => p.topic_id === t.id).length,
-      }));
-    }
-    return getSampleTopics();
-  }, [hasReal, brand.topics, brand.prompts]);
+    return brand.topics.map((t) => ({
+      id: t.id,
+      name: t.name,
+      promptCount: brand.prompts.filter((p) => p.topic_id === t.id).length,
+    }));
+  }, [brand.topics, brand.prompts]);
 
   const prompts = useMemo(() => {
-    if (hasReal) {
-      return brand.prompts.map((p) => ({
-        id: p.id,
-        topicId: p.topic_id ?? "",
-        text: p.prompt_text,
-        estimatedVolume: p.estimated_volume,
-        tags: p.tags,
-      }));
-    }
-    return getSamplePrompts();
-  }, [hasReal, brand.prompts]);
+    return brand.prompts.map((p) => ({
+      id: p.id,
+      topicId: p.topic_id ?? "",
+      text: p.prompt_text,
+      estimatedVolume: p.estimated_volume,
+      tags: p.tags,
+    }));
+  }, [brand.prompts]);
 
-  const results = useMemo(() => {
-    if (hasReal) return brand.results;
-    return getSampleAnalysisResults();
-  }, [hasReal, brand.results]);
+  const results = brand.results;
 
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
@@ -92,19 +76,36 @@ export default function PromptsPage() {
     return topics.find((t) => t.id === topicId)?.name ?? "—";
   }
 
+  if (!brand.hasBrand) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <p className="text-[#8A9BA3] text-sm mb-4">Add a brand to start tracking prompts.</p>
+        <a href="/onboarding/step-1" className="px-6 py-3 bg-[#EF4623] text-white rounded-lg text-sm font-semibold">
+          Add your first brand
+        </a>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-[1200px] mx-auto">
       <div className="mb-5">
         <h1 className="text-xl font-bold text-[#2D3B42]">Prompts</h1>
         <p className="text-[13px] text-[#8A9BA3] mt-0.5">
-          Manage and monitor the prompts being tracked for your brand.
+          Manage and monitor the prompts being tracked for {brand.activeBrand?.brand_name ?? "your brand"}.
         </p>
       </div>
 
-      {!hasReal && (
+      {!brand.hasRealData && prompts.length > 0 && (
         <div className="mb-4">
           <Callout type="info">
-            Showing sample data. Add a brand and run analysis to see real results.
+            {prompts.length} prompts loaded from onboarding. Run an analysis to see how AI models respond.
+            <button
+              onClick={() => brand.triggerAnalysis()}
+              className="ml-2 underline font-semibold text-[#EF4623]"
+            >
+              Run analysis now
+            </button>
           </Callout>
         </div>
       )}
@@ -112,10 +113,10 @@ export default function PromptsPage() {
       <div className="flex gap-3 mb-5 flex-wrap">
         <Metric label="Total Prompts" value={String(totalPrompts)} />
         <Metric label="Active" value={String(totalPrompts)} />
-        <Metric label="Brand Presence" value={`${brandPresence}%`} />
+        <Metric label="Brand Presence" value={totalResults > 0 ? `${brandPresence}%` : "—"} />
         <Metric
           label="Avg. Results / Prompt"
-          value={totalPrompts > 0 ? String(Math.round(totalResults / totalPrompts)) : "0"}
+          value={totalPrompts > 0 && totalResults > 0 ? String(Math.round(totalResults / totalPrompts)) : "—"}
         />
       </div>
 
@@ -179,6 +180,13 @@ export default function PromptsPage() {
                 </tr>
               </thead>
               <tbody>
+                {filteredPrompts.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-3 py-8 text-center text-[#8A9BA3] text-sm">
+                      No prompts found. Complete onboarding to generate prompts.
+                    </td>
+                  </tr>
+                )}
                 {filteredPrompts.map((prompt) => {
                   const status = getPromptStatus(prompt.id);
                   const isExpanded = expandedRow === prompt.id;
@@ -252,7 +260,7 @@ function PromptRow({
           <Tag label={status.label} color={status.color} small />
         </td>
       </tr>
-      {isExpanded && (
+      {isExpanded && promptResults.length > 0 && (
         <tr className="border-b border-[#E8EAEB]">
           <td colSpan={4} className="bg-[#F8F9FA] px-3 py-3">
             <div className="pl-5">
@@ -299,6 +307,13 @@ function PromptRow({
                 ))}
               </div>
             </div>
+          </td>
+        </tr>
+      )}
+      {isExpanded && promptResults.length === 0 && (
+        <tr className="border-b border-[#E8EAEB]">
+          <td colSpan={4} className="bg-[#F8F9FA] px-3 py-4 text-center text-[#8A9BA3] text-xs">
+            No analysis results yet. Run an analysis to see how AI models respond to this prompt.
           </td>
         </tr>
       )}

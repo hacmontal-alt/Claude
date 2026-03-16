@@ -15,20 +15,17 @@ const MODEL_DISPLAY: Record<string, string> = {
 };
 
 export default function EarnedPage() {
-  const { hasRealData, results, sources, prompts, activeBrand } = useBrand();
+  const { hasBrand, hasRealData, results, sources, prompts, activeBrand, triggerAnalysis } = useBrand();
 
-  // Earned = prompts where the brand was organically mentioned
   const earnedMentions = useMemo(() => {
-    const data = hasRealData ? results : [];
-    if (!hasRealData) return getSampleEarned();
+    if (!hasRealData) return [];
 
-    // Group by prompt
     const promptMap = new Map<
       string,
       { promptText: string; models: { model: string; position: number | null; sentiment: string | null }[]; sources: string[] }
     >();
 
-    for (const r of data) {
+    for (const r of results) {
       if (!r.brand_mentioned) continue;
       const existing = promptMap.get(r.prompt_id) || {
         promptText: prompts.find((p) => p.id === r.prompt_id)?.prompt_text ?? r.prompt_id,
@@ -43,7 +40,6 @@ export default function EarnedPage() {
       promptMap.set(r.prompt_id, existing);
     }
 
-    // Add sources
     for (const s of sources) {
       if (s.is_brand_owned) {
         const existing = promptMap.get(s.prompt_id);
@@ -77,6 +73,41 @@ export default function EarnedPage() {
     return String(Math.round(avg * 10) / 10);
   }, [earnedMentions]);
 
+  if (!hasBrand) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <p className="text-[#8A9BA3] text-sm mb-4">Add a brand to track earned mentions.</p>
+        <a href="/onboarding/step-1" className="px-6 py-3 bg-[#EF4623] text-white rounded-lg text-sm font-semibold">
+          Add your first brand
+        </a>
+      </div>
+    );
+  }
+
+  if (!hasRealData) {
+    return (
+      <div className="max-w-[1200px] mx-auto">
+        <div className="mb-5">
+          <h1 className="text-xl font-bold text-[#2D3B42]">Earned</h1>
+          <p className="text-[13px] text-[#8A9BA3] mt-0.5">
+            Track where AI models organically mention {activeBrand?.brand_name ?? "your brand"} in their responses.
+          </p>
+        </div>
+        <div className="bg-white border border-[#E8EAEB] rounded-xl p-8 text-center">
+          <p className="text-[#8A9BA3] text-sm mb-4">
+            Run an analysis to discover where AI models mention your brand organically.
+          </p>
+          <button
+            onClick={() => triggerAnalysis()}
+            className="px-6 py-3 bg-[#EF4623] text-white rounded-lg text-sm font-semibold hover:bg-[#d93d1e] transition"
+          >
+            Run analysis
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-[1200px] mx-auto">
       <div className="mb-5">
@@ -86,14 +117,6 @@ export default function EarnedPage() {
           {activeBrand?.brand_name ?? "your brand"} in their responses.
         </p>
       </div>
-
-      {!hasRealData && (
-        <div className="mb-4">
-          <Callout type="info">
-            Showing sample data. Run analysis to see real earned mentions.
-          </Callout>
-        </div>
-      )}
 
       <div className="flex gap-3 mb-5 flex-wrap">
         <Metric label="Total Mentions" value={String(totalMentions)} />
@@ -154,68 +177,10 @@ export default function EarnedPage() {
 
         {earnedMentions.length === 0 && (
           <div className="text-center py-12 text-[#8A9BA3] text-sm">
-            No earned mentions found yet. Run an analysis to discover where AI
-            mentions your brand.
+            No earned mentions found in the latest analysis.
           </div>
         )}
       </div>
     </div>
   );
-}
-
-function getSampleEarned() {
-  return [
-    {
-      promptId: "s1",
-      promptText: "What is the best single-serve coffee machine for home use?",
-      models: [
-        { model: "chatgpt", position: 2, sentiment: "positive" },
-        { model: "perplexity", position: 1, sentiment: "positive" },
-        { model: "gemini", position: 3, sentiment: "neutral" },
-      ],
-      sources: ["nespresso.com"],
-    },
-    {
-      promptId: "s2",
-      promptText: "Nespresso vs Keurig which one should I buy?",
-      models: [
-        { model: "chatgpt", position: 1, sentiment: "positive" },
-        { model: "perplexity", position: 1, sentiment: "positive" },
-        { model: "grok", position: 2, sentiment: "neutral" },
-        { model: "ai_overviews", position: 1, sentiment: "positive" },
-      ],
-      sources: ["nespresso.com"],
-    },
-    {
-      promptId: "s3",
-      promptText: "Best Nespresso capsules for a strong coffee",
-      models: [
-        { model: "chatgpt", position: 1, sentiment: "positive" },
-        { model: "gemini", position: 1, sentiment: "positive" },
-        { model: "perplexity", position: 1, sentiment: "positive" },
-        { model: "ai_overviews", position: 1, sentiment: "positive" },
-        { model: "grok", position: 1, sentiment: "positive" },
-      ],
-      sources: ["nespresso.com"],
-    },
-    {
-      promptId: "s4",
-      promptText: "Which coffee pods taste the most like real espresso?",
-      models: [
-        { model: "chatgpt", position: 3, sentiment: "positive" },
-        { model: "perplexity", position: 2, sentiment: "neutral" },
-      ],
-      sources: [],
-    },
-    {
-      promptId: "s5",
-      promptText: "Is the Nespresso Vertuo worth it?",
-      models: [
-        { model: "chatgpt", position: 1, sentiment: "positive" },
-        { model: "gemini", position: 2, sentiment: "neutral" },
-        { model: "perplexity", position: 1, sentiment: "positive" },
-      ],
-      sources: ["nespresso.com"],
-    },
-  ];
 }
