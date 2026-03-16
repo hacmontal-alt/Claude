@@ -2,6 +2,8 @@
 
 import { useMemo } from "react";
 import { useBrand } from "@/lib/context/BrandContext";
+import { getSampleOpportunities } from "@/lib/utils/sample-data";
+import Callout from "@/components/ui/Callout";
 import Metric from "@/components/ui/Metric";
 import Tag from "@/components/ui/Tag";
 
@@ -28,10 +30,10 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 export default function OpportunitiesPage() {
-  const { hasBrand, hasRealData, results, prompts, sources, activeBrand, triggerAnalysis } = useBrand();
+  const { hasRealData, results, prompts, sources, activeBrand, hasBrand, triggerAnalysis } = useBrand();
 
   const opportunities = useMemo(() => {
-    if (!hasRealData) return [];
+    if (!hasRealData) return getSampleOpportunities();
 
     const opps: {
       id: string;
@@ -132,44 +134,9 @@ export default function OpportunitiesPage() {
     );
   }, [hasRealData, results, prompts, sources, activeBrand]);
 
-  if (!hasBrand) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 text-center">
-        <p className="text-[#8A9BA3] text-sm mb-4">Add a brand to discover opportunities.</p>
-        <a href="/onboarding/step-1" className="px-6 py-3 bg-[#EF4623] text-white rounded-lg text-sm font-semibold">
-          Add your first brand
-        </a>
-      </div>
-    );
-  }
-
-  if (!hasRealData) {
-    return (
-      <div className="max-w-[1200px] mx-auto">
-        <div className="mb-5">
-          <h1 className="text-xl font-bold text-[#2D3B42]">Opportunities</h1>
-          <p className="text-[13px] text-[#8A9BA3] mt-0.5">
-            Visibility gaps and improvement opportunities for {activeBrand?.brand_name ?? "your brand"}.
-          </p>
-        </div>
-        <div className="bg-white border border-[#E8EAEB] rounded-xl p-8 text-center">
-          <p className="text-[#8A9BA3] text-sm mb-4">
-            Run an analysis to discover visibility gaps and opportunities.
-          </p>
-          <button
-            onClick={() => triggerAnalysis()}
-            className="px-6 py-3 bg-[#EF4623] text-white rounded-lg text-sm font-semibold hover:bg-[#d93d1e] transition"
-          >
-            Run analysis
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   const highCount = opportunities.filter((o) => o.severity === "high").length;
   const totalImpact = opportunities.reduce(
-    (a, o) => a + (o.estimatedImpact ?? 0),
+    (a, o) => a + ((o as any).estimatedImpact ?? 0),
     0
   );
 
@@ -181,6 +148,25 @@ export default function OpportunitiesPage() {
           Visibility gaps and improvement opportunities for {activeBrand?.brand_name ?? "your brand"}.
         </p>
       </div>
+
+      {!hasRealData && hasBrand && (
+        <div className="mb-4">
+          <Callout type="info">
+            Showing sample data. Run analysis to discover real opportunities for {activeBrand?.brand_name}.
+            <button onClick={() => triggerAnalysis()} className="ml-2 underline font-semibold text-[#EF4623]">
+              Run analysis now
+            </button>
+          </Callout>
+        </div>
+      )}
+
+      {!hasRealData && !hasBrand && (
+        <div className="mb-4">
+          <Callout type="info">
+            Showing sample data. Add a brand and run analysis to discover real opportunities.
+          </Callout>
+        </div>
+      )}
 
       <div className="flex gap-3 mb-5 flex-wrap">
         <Metric label="Opportunities" value={String(opportunities.length)} />
@@ -212,9 +198,9 @@ export default function OpportunitiesPage() {
                 color="gray"
                 small
               />
-              {opp.estimatedImpact && (
+              {(opp as any).estimatedImpact && (
                 <span className="text-[10px] text-[#8A9BA3]">
-                  {(opp.estimatedImpact / 1000).toFixed(0)}K monthly
+                  {((opp as any).estimatedImpact / 1000).toFixed(0)}K monthly
                 </span>
               )}
             </div>
@@ -239,7 +225,7 @@ export default function OpportunitiesPage() {
 
         {opportunities.length === 0 && (
           <div className="text-center py-12 text-[#8A9BA3] text-sm">
-            No major opportunities found. Your brand visibility looks solid!
+            No opportunities found. Run an analysis first.
           </div>
         )}
       </div>

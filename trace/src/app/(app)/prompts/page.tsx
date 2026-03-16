@@ -2,6 +2,11 @@
 
 import { useState, useMemo } from "react";
 import { useBrand } from "@/lib/context/BrandContext";
+import {
+  getSampleTopics,
+  getSamplePrompts,
+  getSampleAnalysisResults,
+} from "@/lib/utils/sample-data";
 import Callout from "@/components/ui/Callout";
 import Tag from "@/components/ui/Tag";
 import Metric from "@/components/ui/Metric";
@@ -22,26 +27,38 @@ const SENTIMENT_COLOR: Record<string, string> = {
 
 export default function PromptsPage() {
   const brand = useBrand();
+  // Use real data if the brand has prompts in Supabase, otherwise sample
+  const useReal = brand.hasBrand && brand.prompts.length > 0;
 
   const topics = useMemo(() => {
-    return brand.topics.map((t) => ({
-      id: t.id,
-      name: t.name,
-      promptCount: brand.prompts.filter((p) => p.topic_id === t.id).length,
-    }));
-  }, [brand.topics, brand.prompts]);
+    if (useReal) {
+      return brand.topics.map((t) => ({
+        id: t.id,
+        name: t.name,
+        promptCount: brand.prompts.filter((p) => p.topic_id === t.id).length,
+      }));
+    }
+    return getSampleTopics();
+  }, [useReal, brand.topics, brand.prompts]);
 
   const prompts = useMemo(() => {
-    return brand.prompts.map((p) => ({
-      id: p.id,
-      topicId: p.topic_id ?? "",
-      text: p.prompt_text,
-      estimatedVolume: p.estimated_volume,
-      tags: p.tags,
-    }));
-  }, [brand.prompts]);
+    if (useReal) {
+      return brand.prompts.map((p) => ({
+        id: p.id,
+        topicId: p.topic_id ?? "",
+        text: p.prompt_text,
+        estimatedVolume: p.estimated_volume,
+        tags: p.tags,
+      }));
+    }
+    return getSamplePrompts();
+  }, [useReal, brand.prompts]);
 
-  const results = brand.results;
+  const results = useMemo(() => {
+    if (brand.hasRealData) return brand.results;
+    if (useReal) return []; // Brand has prompts but no analysis yet
+    return getSampleAnalysisResults();
+  }, [brand.hasRealData, brand.results, useReal]);
 
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
@@ -76,17 +93,6 @@ export default function PromptsPage() {
     return topics.find((t) => t.id === topicId)?.name ?? "—";
   }
 
-  if (!brand.hasBrand) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 text-center">
-        <p className="text-[#8A9BA3] text-sm mb-4">Add a brand to start tracking prompts.</p>
-        <a href="/onboarding/step-1" className="px-6 py-3 bg-[#EF4623] text-white rounded-lg text-sm font-semibold">
-          Add your first brand
-        </a>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-[1200px] mx-auto">
       <div className="mb-5">
@@ -96,16 +102,24 @@ export default function PromptsPage() {
         </p>
       </div>
 
-      {!brand.hasRealData && prompts.length > 0 && (
+      {!brand.hasRealData && useReal && (
         <div className="mb-4">
           <Callout type="info">
-            {prompts.length} prompts loaded from onboarding. Run an analysis to see how AI models respond.
+            {prompts.length} prompts loaded. Run an analysis to see how AI models respond.
             <button
               onClick={() => brand.triggerAnalysis()}
               className="ml-2 underline font-semibold text-[#EF4623]"
             >
               Run analysis now
             </button>
+          </Callout>
+        </div>
+      )}
+
+      {!useReal && (
+        <div className="mb-4">
+          <Callout type="info">
+            Showing sample data. Add a brand and run analysis to see real results.
           </Callout>
         </div>
       )}
@@ -180,13 +194,6 @@ export default function PromptsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredPrompts.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="px-3 py-8 text-center text-[#8A9BA3] text-sm">
-                      No prompts found. Complete onboarding to generate prompts.
-                    </td>
-                  </tr>
-                )}
                 {filteredPrompts.map((prompt) => {
                   const status = getPromptStatus(prompt.id);
                   const isExpanded = expandedRow === prompt.id;

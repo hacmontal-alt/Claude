@@ -8,7 +8,6 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 // ── Types ──
 
@@ -128,79 +127,56 @@ export function BrandProvider({ children }: { children: ReactNode }) {
   const hasBrand = activeBrand !== null;
   const hasRealData = results.length > 0;
 
-  // Load brands on mount
-  useEffect(() => {
-    async function loadBrands() {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
+  // Load brands and data via API route (bypasses RLS)
+  const loadData = useCallback(async (brandId?: string) => {
+    try {
+      const url = brandId ? `/api/brands?brandId=${brandId}` : "/api/brands";
+      const res = await fetch(url);
+      if (!res.ok) {
         setLoading(false);
         return;
       }
+      const data = await res.json();
 
-      const { data: brandList } = await supabase
-        .from("brands")
-        .select("*")
-        .order("created_at", { ascending: true });
-
-      if (brandList && brandList.length > 0) {
-        setBrands(brandList);
-        setActiveBrandId(brandList[0].id);
+      if (data.brands && data.brands.length > 0) {
+        setBrands(data.brands);
+        const targetId = brandId || data.brands[0].id;
+        setActiveBrandId(targetId);
       }
-      setLoading(false);
+
+      if (data.brandData) {
+        setTopics(data.brandData.topics ?? []);
+        setPrompts(data.brandData.prompts ?? []);
+        setCompetitors(data.brandData.competitors ?? []);
+        setLatestRun(data.brandData.latestRun ?? null);
+        setResults(data.brandData.results ?? []);
+        setSources(data.brandData.sources ?? []);
+      }
+    } catch (err) {
+      console.error("Failed to load brand data:", err);
     }
-    loadBrands();
+    setLoading(false);
   }, []);
 
-  // Load brand data when active brand changes
-  const loadBrandData = useCallback(async (brandId: string) => {
-    const supabase = createClient();
-
-    const [topicsRes, promptsRes, competitorsRes, runsRes] = await Promise.all([
-      supabase.from("topics").select("*").eq("brand_id", brandId),
-      supabase.from("prompts").select("*").eq("brand_id", brandId).order("created_at"),
-      supabase.from("competitors").select("*").eq("brand_id", brandId),
-      supabase
-        .from("analysis_runs")
-        .select("*")
-        .eq("brand_id", brandId)
-        .order("started_at", { ascending: false })
-        .limit(1),
-    ]);
-
-    setTopics(topicsRes.data ?? []);
-    setPrompts(promptsRes.data ?? []);
-    setCompetitors(competitorsRes.data ?? []);
-
-    const run = runsRes.data?.[0] ?? null;
-    setLatestRun(run);
-
-    if (run) {
-      const [resultsRes, sourcesRes] = await Promise.all([
-        supabase.from("analysis_results").select("*").eq("run_id", run.id),
-        supabase.from("cited_sources").select("*").eq("run_id", run.id),
-      ]);
-      setResults(resultsRes.data ?? []);
-      setSources(sourcesRes.data ?? []);
-    } else {
-      setResults([]);
-      setSources([]);
-    }
-  }, []);
-
+  // Load on mount
   useEffect(() => {
-    if (activeBrandId) {
-      loadBrandData(activeBrandId);
-    }
-  }, [activeBrandId, loadBrandData]);
+    loadData();
+  }, [loadData]);
+
+  // Reload when brand changes
+  const switchBrand = useCallback(
+    (id: string) => {
+      setActiveBrandId(id);
+      loadData(id);
+    },
+    [loadData]
+  );
 
   const refresh = useCallback(async () => {
     if (activeBrandId) {
-      await loadBrandData(activeBrandId);
+      await loadData(activeBrandId);
     }
-  }, [activeBrandId, loadBrandData]);
+  }, [activeBrandId, loadData]);
 
   const triggerAnalysis = useCallback(async () => {
     if (!activeBrandId) return null;
@@ -240,7 +216,7 @@ export function BrandProvider({ children }: { children: ReactNode }) {
         analyzing,
         hasBrand,
         hasRealData,
-        setActiveBrandId,
+        setActiveBrandId: switchBrand,
         refresh,
         triggerAnalysis,
       }}
