@@ -29,7 +29,8 @@ function StepIndicator({ current }: { current: number }) {
   const steps = [
     { num: 1, label: "Brand" },
     { num: 2, label: "Prompts" },
-    { num: 3, label: "Setup" },
+    { num: 3, label: "Preview" },
+    { num: 4, label: "Start" },
   ];
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 48 }}>
@@ -44,7 +45,7 @@ function StepIndicator({ current }: { current: number }) {
               color: step.num <= current ? "#fff" : "#8A9BA3",
               transition: "all 0.3s",
             }}>
-              {step.num < current ? "✓" : step.num}
+              {step.num < current ? "\u2713" : step.num}
             </div>
             <span style={{
               fontSize: 13, fontWeight: 500,
@@ -52,7 +53,7 @@ function StepIndicator({ current }: { current: number }) {
             }}>{step.label}</span>
           </div>
           {i < steps.length - 1 && (
-            <div style={{ width: 48, height: 1, background: step.num < current ? "#EF4623" : "#E8EAEB" }} />
+            <div style={{ width: 36, height: 1, background: step.num < current ? "#EF4623" : "#E8EAEB" }} />
           )}
         </div>
       ))}

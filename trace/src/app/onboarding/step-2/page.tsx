@@ -43,7 +43,8 @@ function StepIndicator({ current }: { current: number }) {
   const steps = [
     { num: 1, label: "Brand" },
     { num: 2, label: "Prompts" },
-    { num: 3, label: "Setup" },
+    { num: 3, label: "Preview" },
+    { num: 4, label: "Start" },
   ];
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 36 }}>
@@ -57,12 +58,12 @@ function StepIndicator({ current }: { current: number }) {
               background: step.num <= current ? "#EF4623" : "#E8EAEB",
               color: step.num <= current ? "#fff" : "#8A9BA3",
             }}>
-              {step.num < current ? "✓" : step.num}
+              {step.num < current ? "\u2713" : step.num}
             </div>
             <span style={{ fontSize: 13, fontWeight: 500, color: step.num <= current ? "#2D3B42" : "#8A9BA3" }}>{step.label}</span>
           </div>
           {i < steps.length - 1 && (
-            <div style={{ width: 48, height: 1, background: step.num < current ? "#EF4623" : "#E8EAEB" }} />
+            <div style={{ width: 36, height: 1, background: step.num < current ? "#EF4623" : "#E8EAEB" }} />
           )}
         </div>
       ))}
@@ -294,7 +295,7 @@ export default function Step2() {
           transition: "all 0.2s",
         }}
       >
-        Start tracking
+        See my brand&apos;s AI visibility
       </button>
     </div>
   );
