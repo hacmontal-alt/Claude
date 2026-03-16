@@ -70,13 +70,14 @@ export async function POST(request: NextRequest) {
 
   const competitorNames = (competitors || []).map((c) => c.competitor_name);
 
-  // Only run models that have API keys configured
+  // Only run models that have API keys configured (skip empty/whitespace keys)
+  const hasKey = (key?: string) => !!key && key.trim().length > 1;
   const availableModels: string[] = [];
-  if (process.env.OPENAI_API_KEY) availableModels.push("chatgpt");
-  if (process.env.GOOGLE_AI_API_KEY) availableModels.push("gemini");
-  if (process.env.PERPLEXITY_API_KEY) availableModels.push("perplexity");
-  if (process.env.XAI_API_KEY) availableModels.push("grok");
-  if (process.env.BRIGHTDATA_API_TOKEN) availableModels.push("ai_overviews");
+  if (hasKey(process.env.OPENAI_API_KEY)) availableModels.push("chatgpt");
+  if (hasKey(process.env.GOOGLE_AI_API_KEY)) availableModels.push("gemini");
+  if (hasKey(process.env.PERPLEXITY_API_KEY)) availableModels.push("perplexity");
+  if (hasKey(process.env.XAI_API_KEY)) availableModels.push("grok");
+  if (hasKey(process.env.BRIGHTDATA_API_TOKEN)) availableModels.push("ai_overviews");
 
   if (availableModels.length === 0) {
     return NextResponse.json(
@@ -144,9 +145,7 @@ export async function POST(request: NextRequest) {
             url: source.url,
             domain: source.domain,
             content_type: classifyContentType(source.domain, source.url),
-            is_brand_owned: source.domain.includes(
-              brand.brand_name.toLowerCase().replace(/[^a-z]/g, "")
-            ),
+            is_brand_owned: isBrandOwnedDomain(source.domain, brand.brand_url, brand.brand_name),
           });
         }
 
@@ -187,4 +186,18 @@ export async function POST(request: NextRequest) {
     errorCount,
     errors: errors.slice(0, 10),
   });
+}
+
+/** Check if a cited domain belongs to the brand */
+function isBrandOwnedDomain(domain: string, brandUrl: string, brandName: string): boolean {
+  const d = domain.toLowerCase().replace(/^www\./, "");
+  // Match against brand URL
+  try {
+    const brandDomain = new URL(brandUrl.startsWith("http") ? brandUrl : `https://${brandUrl}`).hostname.replace(/^www\./, "");
+    if (d === brandDomain || d.endsWith(`.${brandDomain}`)) return true;
+  } catch {}
+  // Fallback: check if domain contains brand name
+  const cleanName = brandName.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (cleanName.length >= 3 && d.includes(cleanName)) return true;
+  return false;
 }
