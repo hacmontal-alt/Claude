@@ -27,11 +27,10 @@ const SENTIMENT_COLOR: Record<string, string> = {
 
 export default function PromptsPage() {
   const brand = useBrand();
-  // Use real data if the brand has prompts in Supabase, otherwise sample
-  const useReal = brand.hasBrand && brand.prompts.length > 0;
+  const hasReal = brand.hasRealData;
 
   const topics = useMemo(() => {
-    if (useReal) {
+    if (hasReal) {
       return brand.topics.map((t) => ({
         id: t.id,
         name: t.name,
@@ -39,10 +38,10 @@ export default function PromptsPage() {
       }));
     }
     return getSampleTopics();
-  }, [useReal, brand.topics, brand.prompts]);
+  }, [hasReal, brand.topics, brand.prompts]);
 
   const prompts = useMemo(() => {
-    if (useReal) {
+    if (hasReal) {
       return brand.prompts.map((p) => ({
         id: p.id,
         topicId: p.topic_id ?? "",
@@ -52,13 +51,12 @@ export default function PromptsPage() {
       }));
     }
     return getSamplePrompts();
-  }, [useReal, brand.prompts]);
+  }, [hasReal, brand.prompts]);
 
   const results = useMemo(() => {
-    if (brand.hasRealData) return brand.results;
-    if (useReal) return []; // Brand has prompts but no analysis yet
+    if (hasReal) return brand.results;
     return getSampleAnalysisResults();
-  }, [brand.hasRealData, brand.results, useReal]);
+  }, [hasReal, brand.results]);
 
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
@@ -70,27 +68,24 @@ export default function PromptsPage() {
   const totalPrompts = prompts.length;
   const totalResults = results.length;
   const mentionedCount = results.filter((r) => r.brand_mentioned).length;
-  const brandPresence =
-    totalResults > 0
-      ? Math.round((mentionedCount / totalResults) * 1000) / 10
-      : 0;
+  const brandPresence = totalResults > 0 ? Math.round((mentionedCount / totalResults) * 1000) / 10 : 0;
 
   function getPromptResults(promptId: string) {
     return results.filter((r) => r.prompt_id === promptId);
   }
 
   function getPromptStatus(promptId: string) {
-    const pr = getPromptResults(promptId);
-    if (pr.length === 0) return { label: "Pending", color: "gray" };
-    const mentioned = pr.filter((r) => r.brand_mentioned).length;
-    const rate = mentioned / pr.length;
+    const promptResults = getPromptResults(promptId);
+    if (promptResults.length === 0) return { label: "Pending", color: "gray" };
+    const mentioned = promptResults.filter((r) => r.brand_mentioned).length;
+    const rate = mentioned / promptResults.length;
     if (rate >= 0.7) return { label: "Strong", color: "green" };
     if (rate >= 0.4) return { label: "Moderate", color: "orange" };
     return { label: "Weak", color: "red" };
   }
 
   function getTopicName(topicId: string) {
-    return topics.find((t) => t.id === topicId)?.name ?? "—";
+    return topics.find((t) => t.id === topicId)?.name ?? "Unknown";
   }
 
   return (
@@ -102,36 +97,29 @@ export default function PromptsPage() {
         </p>
       </div>
 
-      {!brand.hasRealData && useReal && (
-        <div className="mb-4">
+      <div className="mb-4">
+        {!hasReal ? (
           <Callout type="info">
-            {prompts.length} prompts loaded. Run an analysis to see how AI models respond.
-            <button
-              onClick={() => brand.triggerAnalysis()}
-              className="ml-2 underline font-semibold text-[#EF4623]"
-            >
-              Run analysis now
-            </button>
+            Showing sample data{brand.activeBrand ? ` for ${brand.activeBrand.brand_name}` : ""}. Connect your brand to see real results.
+            {brand.activeBrand && (
+              <button onClick={() => brand.triggerAnalysis()} className="ml-2 underline font-semibold text-[#EF4623]">
+                Run analysis now
+              </button>
+            )}
           </Callout>
-        </div>
-      )}
-
-      {!useReal && (
-        <div className="mb-4">
-          <Callout type="info">
-            Showing sample data. Add a brand and run analysis to see real results.
+        ) : (
+          <Callout type="success">
+            Showing real analysis results for {brand.activeBrand?.brand_name ?? "your brand"}.
           </Callout>
-        </div>
-      )}
+        )}
+      </div>
 
+      {/* Summary metrics */}
       <div className="flex gap-3 mb-5 flex-wrap">
         <Metric label="Total Prompts" value={String(totalPrompts)} />
         <Metric label="Active" value={String(totalPrompts)} />
-        <Metric label="Brand Presence" value={totalResults > 0 ? `${brandPresence}%` : "—"} />
-        <Metric
-          label="Avg. Results / Prompt"
-          value={totalPrompts > 0 && totalResults > 0 ? String(Math.round(totalResults / totalPrompts)) : "—"}
-        />
+        <Metric label="Brand Presence" value={`${brandPresence}%`} change={!hasReal ? "+3.2%" : undefined} />
+        <Metric label="Avg. Results / Prompt" value={totalPrompts > 0 ? String(Math.round(totalResults / totalPrompts)) : "0"} />
       </div>
 
       <div className="flex gap-5">
@@ -144,30 +132,22 @@ export default function PromptsPage() {
             <button
               onClick={() => setSelectedTopic(null)}
               className={`w-full text-left text-[13px] px-2 py-1.5 rounded-md transition ${
-                selectedTopic === null
-                  ? "bg-[#FDF1EE] text-[#EF4623] font-semibold"
-                  : "text-[#4A5D66] hover:bg-[#F8F9FA]"
+                selectedTopic === null ? "bg-[#FDF1EE] text-[#EF4623] font-semibold" : "text-[#4A5D66] hover:bg-[#F8F9FA]"
               }`}
             >
               All
-              <span className="text-[11px] text-[#8A9BA3] ml-1.5">
-                {prompts.length}
-              </span>
+              <span className="text-[11px] text-[#8A9BA3] ml-1.5">{prompts.length}</span>
             </button>
             {topics.map((topic) => (
               <button
                 key={topic.id}
                 onClick={() => setSelectedTopic(topic.id)}
                 className={`w-full text-left text-[13px] px-2 py-1.5 rounded-md transition ${
-                  selectedTopic === topic.id
-                    ? "bg-[#FDF1EE] text-[#EF4623] font-semibold"
-                    : "text-[#4A5D66] hover:bg-[#F8F9FA]"
+                  selectedTopic === topic.id ? "bg-[#FDF1EE] text-[#EF4623] font-semibold" : "text-[#4A5D66] hover:bg-[#F8F9FA]"
                 }`}
               >
                 {topic.name}
-                <span className="text-[11px] text-[#8A9BA3] ml-1.5">
-                  {topic.promptCount}
-                </span>
+                <span className="text-[11px] text-[#8A9BA3] ml-1.5">{topic.promptCount}</span>
               </button>
             ))}
           </div>
@@ -179,18 +159,11 @@ export default function PromptsPage() {
             <table className="w-full text-[13px]">
               <thead>
                 <tr className="border-b border-[#E8EAEB] bg-[#F8F9FA]">
-                  <th className="text-left text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium px-3 py-2.5">
-                    Prompt
-                  </th>
-                  <th className="text-left text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium px-3 py-2.5">
-                    Topic
-                  </th>
-                  <th className="text-right text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium px-3 py-2.5">
-                    Volume
-                  </th>
-                  <th className="text-center text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium px-3 py-2.5">
-                    Status
-                  </th>
+                  <th className="text-left text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium px-3 py-2.5">Prompt</th>
+                  <th className="text-left text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium px-3 py-2.5">Topic</th>
+                  <th className="text-right text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium px-3 py-2.5">Volume</th>
+                  <th className="text-center text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium px-3 py-2.5">Status</th>
+                  <th className="text-right text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium px-3 py-2.5">Last Run</th>
                 </tr>
               </thead>
               <tbody>
@@ -198,7 +171,6 @@ export default function PromptsPage() {
                   const status = getPromptStatus(prompt.id);
                   const isExpanded = expandedRow === prompt.id;
                   const promptResults = getPromptResults(prompt.id);
-
                   return (
                     <PromptRow
                       key={prompt.id}
@@ -207,9 +179,9 @@ export default function PromptsPage() {
                       status={status}
                       isExpanded={isExpanded}
                       promptResults={promptResults}
-                      onToggle={() =>
-                        setExpandedRow(isExpanded ? null : prompt.id)
-                      }
+                      hasReal={hasReal}
+                      lastRun={brand.latestRun?.started_at}
+                      onToggle={() => setExpandedRow(isExpanded ? null : prompt.id)}
                     />
                   );
                 })}
@@ -228,6 +200,8 @@ function PromptRow({
   status,
   isExpanded,
   promptResults,
+  hasReal,
+  lastRun,
   onToggle,
 }: {
   prompt: { id: string; text: string; topicId: string; estimatedVolume: number; tags: string[] };
@@ -235,24 +209,22 @@ function PromptRow({
   status: { label: string; color: string };
   isExpanded: boolean;
   promptResults: { llm_model: string; brand_mentioned: boolean; brand_position: number | null; sentiment: string | null }[];
+  hasReal: boolean;
+  lastRun?: string | null;
   onToggle: () => void;
 }) {
+  const runDate = hasReal && lastRun
+    ? new Date(lastRun).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : "Mar 14, 2026";
+
   return (
     <>
-      <tr
-        onClick={onToggle}
-        className="border-b border-[#E8EAEB] hover:bg-[#F8F9FA] cursor-pointer transition"
-      >
+      <tr onClick={onToggle} className="border-b border-[#E8EAEB] hover:bg-[#F8F9FA] cursor-pointer transition">
         <td className="px-3 py-2.5">
           <div className="flex items-center gap-2">
             <svg
-              className={`w-3 h-3 text-[#8A9BA3] transition-transform shrink-0 ${
-                isExpanded ? "rotate-90" : ""
-              }`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
+              className={`w-3 h-3 text-[#8A9BA3] transition-transform shrink-0 ${isExpanded ? "rotate-90" : ""}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
@@ -260,50 +232,36 @@ function PromptRow({
           </div>
         </td>
         <td className="px-3 py-2.5 text-[#4A5D66]">{topicName}</td>
-        <td className="px-3 py-2.5 text-right text-[#4A5D66] tabular-nums">
-          {prompt.estimatedVolume.toLocaleString()}
-        </td>
+        <td className="px-3 py-2.5 text-right text-[#4A5D66] tabular-nums">{prompt.estimatedVolume.toLocaleString()}</td>
         <td className="px-3 py-2.5 text-center">
           <Tag label={status.label} color={status.color} small />
         </td>
+        <td className="px-3 py-2.5 text-right text-[#8A9BA3] text-[12px]">{runDate}</td>
       </tr>
-      {isExpanded && promptResults.length > 0 && (
+      {isExpanded && (
         <tr className="border-b border-[#E8EAEB]">
-          <td colSpan={4} className="bg-[#F8F9FA] px-3 py-3">
+          <td colSpan={5} className="bg-[#F8F9FA] px-3 py-3">
             <div className="pl-5">
               <div className="text-[10px] text-[#8A9BA3] uppercase tracking-wider font-medium mb-2">
                 Model-by-model results
               </div>
               <div className="grid grid-cols-5 gap-2">
                 {promptResults.map((r) => (
-                  <div
-                    key={r.llm_model}
-                    className="bg-white border border-[#E8EAEB] rounded-lg p-2.5"
-                  >
+                  <div key={r.llm_model} className="bg-white border border-[#E8EAEB] rounded-lg p-2.5">
                     <div className="text-[11px] font-semibold text-[#2D3B42] mb-1.5">
                       {MODEL_DISPLAY[r.llm_model] ?? r.llm_model}
                     </div>
                     <div className="flex items-center gap-1.5 mb-1">
-                      <span
-                        className={`inline-block w-1.5 h-1.5 rounded-full ${
-                          r.brand_mentioned ? "bg-[#059669]" : "bg-[#DC2626]"
-                        }`}
-                      />
+                      <span className={`inline-block w-1.5 h-1.5 rounded-full ${r.brand_mentioned ? "bg-[#059669]" : "bg-[#DC2626]"}`} />
                       <span className="text-[11px] text-[#4A5D66]">
                         {r.brand_mentioned ? "Mentioned" : "Not mentioned"}
                       </span>
                     </div>
                     {r.brand_position !== null && (
-                      <div className="text-[11px] text-[#8A9BA3]">
-                        Position: #{r.brand_position}
-                      </div>
+                      <div className="text-[11px] text-[#8A9BA3]">Position: #{r.brand_position}</div>
                     )}
                     <div className="mt-1">
-                      <Tag
-                        label={r.sentiment ?? "N/A"}
-                        color={SENTIMENT_COLOR[r.sentiment ?? ""] ?? "gray"}
-                        small
-                      />
+                      <Tag label={r.sentiment ?? "N/A"} color={SENTIMENT_COLOR[r.sentiment ?? ""] ?? "gray"} small />
                     </div>
                   </div>
                 ))}
@@ -314,13 +272,6 @@ function PromptRow({
                 ))}
               </div>
             </div>
-          </td>
-        </tr>
-      )}
-      {isExpanded && promptResults.length === 0 && (
-        <tr className="border-b border-[#E8EAEB]">
-          <td colSpan={4} className="bg-[#F8F9FA] px-3 py-4 text-center text-[#8A9BA3] text-xs">
-            No analysis results yet. Run an analysis to see how AI models respond to this prompt.
           </td>
         </tr>
       )}
