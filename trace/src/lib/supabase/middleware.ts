@@ -33,9 +33,11 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup');
-  const isAppPage = request.nextUrl.pathname.startsWith('/overview') || request.nextUrl.pathname.startsWith('/prompts') || request.nextUrl.pathname.startsWith('/sources') || request.nextUrl.pathname.startsWith('/opportunities') || request.nextUrl.pathname.startsWith('/content') || request.nextUrl.pathname.startsWith('/earned') || request.nextUrl.pathname.startsWith('/impact') || request.nextUrl.pathname.startsWith('/research') || request.nextUrl.pathname.startsWith('/settings') || request.nextUrl.pathname.startsWith('/onboarding');
+  const isOnboarding = request.nextUrl.pathname.startsWith('/onboarding') || request.nextUrl.pathname.startsWith('/dashboard');
+  const isAppPage = request.nextUrl.pathname.startsWith('/overview') || request.nextUrl.pathname.startsWith('/prompts') || request.nextUrl.pathname.startsWith('/sources') || request.nextUrl.pathname.startsWith('/opportunities') || request.nextUrl.pathname.startsWith('/content') || request.nextUrl.pathname.startsWith('/earned') || request.nextUrl.pathname.startsWith('/impact') || request.nextUrl.pathname.startsWith('/research') || request.nextUrl.pathname.startsWith('/settings');
   const isPublicPage = request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/agency-directory');
 
+  // Allow onboarding and dashboard without auth (for demo/trial flow)
   if (!user && isAppPage) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';

@@ -3,9 +3,11 @@
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
 export default function SignupPage() {
   const router = useRouter();
+  const supabase = createClient();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,13 +24,54 @@ export default function SignupPage() {
       return;
     }
 
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
     setLoading(true);
 
     try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
+      });
+
+      if (signUpError) {
+        setError(signUpError.message);
+        setLoading(false);
+        return;
+      }
+
+      // If email confirmation is required, show message
+      if (data.user && !data.session) {
+        setError("Check your email for a confirmation link, then sign in.");
+        setLoading(false);
+        return;
+      }
+
+      // Signed up and logged in — go to onboarding
       router.push("/onboarding");
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);
+    }
+  }
+
+  async function handleGoogleSignup() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/onboarding`,
+      },
+    });
+    if (error) {
+      setError(error.message);
     }
   }
 
@@ -187,7 +230,7 @@ export default function SignupPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="At least 8 characters"
+              placeholder="At least 6 characters"
               style={inputStyle}
               onFocus={(e) => (e.target.style.borderColor = "#EF4623")}
               onBlur={(e) => (e.target.style.borderColor = "#E8EAEB")}
@@ -258,6 +301,7 @@ export default function SignupPage() {
 
         <button
           type="button"
+          onClick={handleGoogleSignup}
           style={{
             width: "100%",
             padding: "13px",
