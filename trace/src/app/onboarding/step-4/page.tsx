@@ -88,7 +88,7 @@ export default function Step4Paywall() {
       // Clean up onboarding data
       localStorage.removeItem("trace_onboarding");
 
-      router.push("/dashboard");
+      router.push("/overview");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setSaving(false);
@@ -209,7 +209,7 @@ export default function Step4Paywall() {
 
       {/* Skip for now */}
       <button
-        onClick={() => router.push("/dashboard")}
+        onClick={() => router.push("/overview")}
         style={{
           width: "100%", padding: "12px", marginTop: 8,
           background: "transparent", color: "#8A9BA3",
