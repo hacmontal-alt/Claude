@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: NextRequest) {
@@ -9,35 +10,81 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Brand name and URL required' }, { status: 400 });
     }
 
-    // Use service role client to bypass RLS (no auth during onboarding)
+    // Get the authenticated user from cookies
+    const supabaseAuth = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return req.cookies.getAll();
+          },
+          setAll() {},
+        },
+      }
+    );
+
+    const { data: { user } } = await supabaseAuth.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Not authenticated. Please sign in first.' }, { status: 401 });
+    }
+
+    // Use service role client to bypass RLS for inserts
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Create a temporary org for unauthenticated onboarding
-    // In production, this would be tied to the user's auth session
-    const { data: org, error: orgError } = await supabase
-      .from('organizations')
-      .insert({
-        name: brandName,
-        plan: 'free',
-        // Use a placeholder UUID for unauthenticated users
-        owner_user_id: '00000000-0000-0000-0000-000000000000',
-      })
-      .select()
+    // Check if user already has an org
+    const { data: existingProfile } = await supabase
+      .from('user_profiles')
+      .select('org_id')
+      .eq('id', user.id)
       .single();
 
-    if (orgError) {
-      console.error('Failed to create org:', orgError);
-      return NextResponse.json({ error: 'Failed to save brand data' }, { status: 500 });
+    let orgId: string;
+
+    if (existingProfile?.org_id) {
+      orgId = existingProfile.org_id;
+    } else {
+      // Create org for this user
+      const { data: org, error: orgError } = await supabase
+        .from('organizations')
+        .insert({
+          name: user.user_metadata?.full_name || brandName,
+          plan: 'free',
+          owner_user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (orgError) {
+        console.error('Failed to create org:', orgError);
+        return NextResponse.json({ error: 'Failed to save brand data' }, { status: 500 });
+      }
+
+      orgId = org.id;
+
+      // Create user profile
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .insert({
+          id: user.id,
+          org_id: orgId,
+          role: 'owner',
+        });
+
+      if (profileError) {
+        console.error('Failed to create profile:', profileError);
+      }
     }
 
     // Create brand
     const { data: brand, error: brandError } = await supabase
       .from('brands')
       .insert({
-        org_id: org.id,
+        org_id: orgId,
         brand_name: brandName,
         brand_url: brandUrl,
         market: market || 'US',
@@ -52,7 +99,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Create topics and prompts
-    const topicMap: Record<string, string> = {};
     if (topics && Array.isArray(topics)) {
       for (const topic of topics) {
         const { data: dbTopic, error: topicError } = await supabase
@@ -69,9 +115,6 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        topicMap[topic.name] = dbTopic.id;
-
-        // Insert prompts for this topic
         if (topic.prompts && Array.isArray(topic.prompts)) {
           const promptRows = topic.prompts
             .filter((p: any) => p.checked !== false)
@@ -119,7 +162,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       brandId: brand.id,
-      orgId: org.id,
+      orgId,
     });
   } catch (error) {
     console.error('Save onboarding data failed:', error);
